@@ -1,0 +1,110 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "balloons-fancy",
+  "title": "Balloons Fancy",
+  "description": "Celebrate with system-wide overlay balloons! 🎈✨",
+  "icon": "🎈",
+  "author": "loudog",
+  "categories": [
+    "Fun"
+  ],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "balloons-fancy",
+      "title": "Balloons Fancy",
+      "description": "Launch balloons with native overlay animation",
+      "mode": "no-view",
+      "icon": "🎈"
+    },
+    {
+      "name": "fireworks",
+      "title": "Fireworks",
+      "description": "Launch fireworks with native overlay animation",
+      "mode": "no-view",
+      "icon": "🎆"
+    },
+    {
+      "name": "snow",
+      "title": "Snow",
+      "description": "Let it snow with gentle falling snowflakes",
+      "mode": "no-view",
+      "icon": "❄️"
+    },
+    {
+      "name": "cupcake",
+      "title": "Cupcake Explosion",
+      "description": "Pastel cupcake frosting explosions!",
+      "mode": "no-view",
+      "icon": "🧁"
+    },
+    {
+      "name": "campfire",
+      "title": "Campfire Sparks",
+      "description": "Glowing embers rising from campfire",
+      "mode": "no-view",
+      "icon": "🔥"
+    },
+    {
+      "name": "feather",
+      "title": "Feather Fall",
+      "description": "Gentle feathers floating down peacefully",
+      "mode": "no-view",
+      "icon": "🪶"
+    },
+    {
+      "name": "beer",
+      "title": "Beer Pour",
+      "description": "Screen fills with golden beer and foam!",
+      "mode": "no-view",
+      "icon": "🍺"
+    },
+    {
+      "name": "leaves",
+      "title": "Autumn Leaves",
+      "description": "Red-orange autumn leaves swirling down",
+      "mode": "no-view",
+      "icon": "🍁"
+    },
+    {
+      "name": "rainbow",
+      "title": "Rainbow Arc",
+      "description": "A rainbow fades in and shimmers away",
+      "mode": "no-view",
+      "icon": "🌈"
+    },
+    {
+      "name": "pixels",
+      "title": "8-Bit Pixels",
+      "description": "Pixelated blocks cascade down like Tetris",
+      "mode": "no-view",
+      "icon": "👾"
+    },
+    {
+      "name": "galaxy",
+      "title": "Galaxy Warp",
+      "description": "Starfield whoosh effect like entering hyperspace",
+      "mode": "no-view",
+      "icon": "🪐"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.83.2"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.11",
+    "@types/node": "20.8.10",
+    "@types/react": "18.3.3",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "prepublishOnly": "echo \"\\n\\nIt seems like you are trying to publish the Raycast extension to npm.\\n\\nIf you did intend to publish it to npm, remove the \\`prepublishOnly\\` script and rerun \\`npm publish\\` again.\\nIf you wanted to publish it to the Raycast Store instead, use \\`npm run publish\\` instead.\\n\\n\" && exit 1",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}

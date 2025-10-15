@@ -1,0 +1,7 @@
+{
+  "extends": "@raycast/api/tsconfig.json",
+  "compilerOptions": {
+    "strict": true
+  },
+  "include": ["src/**/*"]
+}

@@ -1,0 +1,13 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Balloon body -->
+  <ellipse cx="256" cy="200" rx="120" ry="160" fill="#FF6B6B" opacity="0.9"/>
+
+  <!-- Highlight -->
+  <ellipse cx="220" cy="150" rx="30" ry="40" fill="white" opacity="0.3"/>
+
+  <!-- Balloon knot -->
+  <path d="M 256 360 Q 250 370 256 380 Q 262 370 256 360" fill="#CC5555"/>
+
+  <!-- String -->
+  <line x1="256" y1="380" x2="256" y2="480" stroke="#333" stroke-width="2"/>
+</svg>
