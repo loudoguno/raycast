@@ -18,7 +18,14 @@
 
 WORKSPACE="$HOME/keybindings"
 
-# Open Ghostty with a new Claude session in the keybindings directory
+# Run health check in Terminal.app
+osascript -e 'tell application "Terminal"
+  activate
+  do script "cd ~/keybindings && ./scripts/healthcheck.sh"
+end tell'
+
+# Open Ghostty with Claude session
+sleep 0.5
 osascript <<EOF
 tell application "Ghostty"
   activate
@@ -32,7 +39,7 @@ end tell
 delay 0.2
 tell application "System Events"
   tell process "Ghostty"
-    keystroke "cd '$WORKSPACE' && ./scripts/healthcheck.sh && claude"
+    keystroke "cd '$WORKSPACE' && claude"
     key code 36
   end tell
 end tell
