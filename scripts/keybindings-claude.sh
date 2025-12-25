@@ -32,7 +32,7 @@ end tell
 delay 0.2
 tell application "System Events"
   tell process "Ghostty"
-    keystroke "cd '$WORKSPACE' && claude"
+    keystroke "cd '$WORKSPACE' && ./scripts/health-check.sh && claude"
     key code 36
   end tell
 end tell
