@@ -19,7 +19,23 @@
 WORKSPACE="$HOME/keybindings"
 
 # Open Ghostty with a new Claude session in the keybindings directory
-# Use Ghostty CLI to open a new window with the command directly
-/Applications/Ghostty.app/Contents/MacOS/ghostty --working-directory="$WORKSPACE" -e bash -c './scripts/health-check.sh; claude' &
+osascript <<EOF
+tell application "Ghostty"
+  activate
+end tell
+delay 0.3
+tell application "System Events"
+  tell process "Ghostty"
+    keystroke "n" using command down
+  end tell
+end tell
+delay 0.2
+tell application "System Events"
+  tell process "Ghostty"
+    keystroke "cd '$WORKSPACE' && ./scripts/healthcheck.sh && claude"
+    key code 36
+  end tell
+end tell
+EOF
 
 echo "Opening keybinding workspace with Claude in Ghostty..."
