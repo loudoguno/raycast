@@ -1,0 +1,23 @@
+# Upstream Tracking File
+# This file tracks the upstream source for this forked extension
+
+# Source repository
+UPSTREAM_REPO=https://github.com/raycast/extensions
+
+# Path within the repository
+UPSTREAM_PATH=extensions/{EXTENSION_NAME}
+
+# Commit hash when forked
+FORKED_FROM_COMMIT={COMMIT_HASH}
+
+# Date when forked
+FORKED_DATE={YYYY-MM-DD}
+
+# Last time upstream was checked for updates
+LAST_SYNC_CHECK={YYYY-MM-DD}
+
+# Last upstream commit that was reviewed/merged
+LAST_SYNCED_COMMIT={COMMIT_HASH}
+
+# Notes about sync status
+SYNC_NOTES=Initial fork, no syncs yet
