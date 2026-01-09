@@ -1,0 +1,70 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "linear-custom",
+  "title": "Linear (Custom)",
+  "description": "Personal fork of Linear extension with custom improvements",
+  "icon": "linear-app-icon.png",
+  "author": "YOUR_RAYCAST_USERNAME",
+  "owner": "YOUR_RAYCAST_USERNAME",
+  "access": "private",
+  "categories": ["Productivity"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "search-issues",
+      "title": "Search Issues",
+      "subtitle": "Linear",
+      "description": "Search Linear issues",
+      "mode": "view"
+    },
+    {
+      "name": "create-issue",
+      "title": "Create Issue",
+      "subtitle": "Linear",
+      "description": "Create a new Linear issue",
+      "mode": "view"
+    },
+    {
+      "name": "my-issues",
+      "title": "My Issues",
+      "subtitle": "Linear",
+      "description": "View issues assigned to you",
+      "mode": "view"
+    },
+    {
+      "name": "submit-feedback",
+      "title": "Submit Feedback",
+      "subtitle": "Linear Custom",
+      "description": "Submit feedback or feature request for this extension",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "githubToken",
+      "type": "password",
+      "required": false,
+      "title": "GitHub Token",
+      "description": "Personal access token for submitting feedback (repo scope)"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.65.0",
+    "@linear/sdk": "^15.0.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.8",
+    "@types/node": "20.10.6",
+    "@types/react": "18.2.46",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "obsidian-custom",
+  "title": "Obsidian (Custom)",
+  "description": "Personal fork of Obsidian extension with custom improvements",
+  "icon": "obsidian-icon.png",
+  "author": "YOUR_RAYCAST_USERNAME",
+  "owner": "YOUR_RAYCAST_USERNAME",
+  "access": "private",
+  "categories": ["Productivity", "Documentation"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "searchNoteCommand",
+      "title": "Search Notes",
+      "subtitle": "Obsidian",
+      "description": "Search your Obsidian notes",
+      "mode": "view"
+    },
+    {
+      "name": "dailyNoteCommand",
+      "title": "Daily Note",
+      "subtitle": "Obsidian",
+      "description": "Open or create today's daily note",
+      "mode": "view"
+    },
+    {
+      "name": "createNoteCommand",
+      "title": "Create Note",
+      "subtitle": "Obsidian",
+      "description": "Create a new note",
+      "mode": "view"
+    },
+    {
+      "name": "quickCaptureCommand",
+      "title": "Quick Capture",
+      "subtitle": "Obsidian",
+      "description": "Quickly capture a thought",
+      "mode": "view"
+    },
+    {
+      "name": "recentNotesCommand",
+      "title": "Recent Notes",
+      "subtitle": "Obsidian",
+      "description": "View recently edited notes",
+      "mode": "view"
+    },
+    {
+      "name": "submit-feedback",
+      "title": "Submit Feedback",
+      "subtitle": "Obsidian Custom",
+      "description": "Submit feedback or feature request for this extension",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "vaultPath",
+      "type": "directory",
+      "required": false,
+      "title": "Vault Path",
+      "description": "Path to your Obsidian vault (auto-detected if empty)"
+    },
+    {
+      "name": "enableContentSearch",
+      "type": "checkbox",
+      "required": false,
+      "default": false,
+      "title": "Enable Content Search",
+      "description": "Search note contents (slower for large vaults)"
+    },
+    {
+      "name": "githubToken",
+      "type": "password",
+      "required": false,
+      "title": "GitHub Token",
+      "description": "Personal access token for submitting feedback (repo scope)"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.65.0",
+    "gray-matter": "^4.0.3"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.8",
+    "@types/node": "20.10.6",
+    "@types/react": "18.2.46",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}

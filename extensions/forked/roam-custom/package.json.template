@@ -1,0 +1,110 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "roam-custom",
+  "title": "Roam Research (Custom)",
+  "description": "Agentic knowledge agent for Roam Research with semantic search",
+  "icon": "roam-icon.png",
+  "author": "YOUR_RAYCAST_USERNAME",
+  "owner": "YOUR_RAYCAST_USERNAME",
+  "access": "private",
+  "categories": ["Productivity", "Documentation"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "semantic-search",
+      "title": "Semantic Search",
+      "subtitle": "Roam",
+      "description": "Search your Roam graph by meaning",
+      "mode": "view"
+    },
+    {
+      "name": "ask-roam",
+      "title": "Ask Roam",
+      "subtitle": "Roam",
+      "description": "Ask questions about your knowledge base",
+      "mode": "view"
+    },
+    {
+      "name": "quick-capture",
+      "title": "Quick Capture",
+      "subtitle": "Roam",
+      "description": "Capture a thought with AI-suggested links",
+      "mode": "view"
+    },
+    {
+      "name": "explore-page",
+      "title": "Explore Page",
+      "subtitle": "Roam",
+      "description": "Visualize page connections",
+      "mode": "view"
+    },
+    {
+      "name": "daily-notes",
+      "title": "Daily Notes",
+      "subtitle": "Roam",
+      "description": "Navigate daily notes",
+      "mode": "view"
+    },
+    {
+      "name": "submit-feedback",
+      "title": "Submit Feedback",
+      "subtitle": "Roam Custom",
+      "description": "Submit feedback or feature request for this extension",
+      "mode": "view"
+    }
+  ],
+  "preferences": [
+    {
+      "name": "graphName",
+      "type": "textfield",
+      "required": true,
+      "title": "Graph Name",
+      "description": "Your Roam graph name"
+    },
+    {
+      "name": "apiToken",
+      "type": "password",
+      "required": true,
+      "title": "Roam API Token",
+      "description": "API token from Roam Settings > Graph > API Tokens"
+    },
+    {
+      "name": "openaiApiKey",
+      "type": "password",
+      "required": false,
+      "title": "OpenAI API Key",
+      "description": "For semantic embeddings (optional, uses local model if empty)"
+    },
+    {
+      "name": "githubToken",
+      "type": "password",
+      "required": false,
+      "title": "GitHub Token",
+      "description": "Personal access token for submitting feedback (repo scope)"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.65.0",
+    "@roam-research/roam-api-sdk": "^0.2.0",
+    "lancedb": "^0.4.0",
+    "better-sqlite3": "^9.2.0",
+    "openai": "^4.24.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.8",
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/node": "20.10.6",
+    "@types/react": "18.2.46",
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish",
+    "index-graph": "ts-node scripts/index-graph.ts"
+  }
+}
