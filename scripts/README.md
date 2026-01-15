@@ -9,6 +9,7 @@ Custom Raycast script commands for quick actions and automation.
 | `abb-quick-replies-ky-house-chrome-profile.sh` | Go to Quick Replies in Chrome profile for KY House (Brandi'es Account) | as described |
 | `cctimeline.sh` | cctimeline | View Claude Code session timeline |
 | `chezmoi-update.sh` | Chezmoi Update | Check for and apply chezmoi dotfile updates |
+| `chrome-profile-my-old-kentucky-host.sh` | Switch to Chrome Profile: My Old Kentucky Host | Opens Chrome profile My Old Kentucky Host via menu |
 | `claude-code-here.sh` | Claude Code HERE | Open the current focused document or directory with Claude Code |
 | `claude-code-open.sh` | Claude Code Open | Open Claude Code in a project (by number from Recent list, or path) |
 | `claude-code-recent.sh` | Claude Code Recent | Open Claude Code in a recent project directory |
@@ -33,4 +34,4 @@ Custom Raycast script commands for quick actions and automation.
 4. The README will be auto-updated before push
 
 ---
-*Last updated: 2025-12-27*
+*Last updated: 2026-01-15*
