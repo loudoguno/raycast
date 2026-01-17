@@ -1,0 +1,62 @@
+{
+  "name": "claude-usage",
+  "title": "Claude Usage",
+  "description": "View your Claude subscription usage limits",
+  "icon": "extension-icon.png",
+  "author": "loudog",
+  "categories": ["Productivity"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "show-usage",
+      "title": "Show Claude Usage",
+      "description": "Display your current Claude subscription usage",
+      "mode": "view"
+    },
+    {
+      "name": "menu-bar",
+      "title": "Claude Usage Menu Bar",
+      "description": "Show current session usage in the menu bar",
+      "mode": "menu-bar",
+      "interval": "10m"
+    },
+    {
+      "name": "daily-summary",
+      "title": "Claude Code Daily Summary",
+      "description": "See what you accomplished with Claude Code today",
+      "mode": "view"
+    },
+    {
+      "name": "weekly-summary",
+      "title": "Claude Code Weekly Summary",
+      "description": "See what you accomplished with Claude Code this week",
+      "mode": "view"
+    },
+    {
+      "name": "monthly-summary",
+      "title": "Claude Code Monthly Summary",
+      "description": "See what you accomplished with Claude Code this month",
+      "mode": "view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.83.0",
+    "@raycast/utils": "^1.17.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.11",
+    "@types/node": "20.8.10",
+    "@types/react": "18.3.3",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.4.5"
+  },
+  "scripts": {
+    "build": "ray build --skip-types -e dist -o dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "prepublishOnly": "echo \"\\n\\nIt seems like you are trying to publish the Raycast extension to npm.\\n\\nIf you did intend to publish it to npm, remove the \\`prepublishOnly\\` script and rerun \\`npm publish\\` again.\\nIf you wanted to publish it to the Raycast Store instead, use \\`npm run publish\\` instead.\\n\\n\" && exit 1",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}
