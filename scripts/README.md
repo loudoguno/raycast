@@ -17,10 +17,16 @@ Custom Raycast script commands for quick actions and automation.
 | `claude-review-history.sh` | Claude Review History | Show chronological list of past Claude review sessions |
 | `claude-usage-quick-ask.sh` | Quick Claude Code Usage | Check Claude Code usage stats |
 | `copy-file-contents.sh` | Copy file contents | - |
+| `ikdb-cheatsheet.sh` | IKDB Cheatsheet | Open IKDB Cheatsheet to view all shortcuts |
+| `ikdb-query.sh` | IKDB Query | Open IKDB Query Widget to check if a key combo is taken |
+| `ikdb-quick-add.sh` | IKDB Quick Add | Open IKDB Quick Add to capture a new keybinding |
 | `kbexp.sh` | kbexp | Launch kbexp keybinding explorer |
 | `keybindings-claude.sh` | Keybindings Claude | Open Claude Code in keybinding workspace |
 | `new-git-project-directory.sh` | New Git Project | create a new directory in ~/projects and initialize as a git directory |
 | `restart-all.sh` | Restart Keybinding Apps | Reload Goku, Karabiner, Slate, Raycast, Slidepad |
+| `stickies-grid.sh` | Stickies Grid | Arrange stickies in a uniform grid pattern |
+| `stickies-info.sh` | Stickies Info | Display information about all stickies |
+| `stickies-timeline.sh` | Stickies Timeline | Arrange stickies by creation date (oldest left, newest right) |
 | `template-script-for-raycast.sh` | Template Script for Raycast | - |
 | `copy-content-of-selected-file-in-finder.applescript` | Copy content of Selected File in Finder | - |
 | `get-menubar-commands.applescript` | Get Menubar Commands of Front Applications | - |
@@ -34,4 +40,4 @@ Custom Raycast script commands for quick actions and automation.
 4. The README will be auto-updated before push
 
 ---
-*Last updated: 2026-01-15*
+*Last updated: 2026-02-18*
