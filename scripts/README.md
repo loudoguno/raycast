@@ -17,6 +17,7 @@ Custom Raycast script commands for quick actions and automation.
 | `claude-review-history.sh` | Claude Review History | Show chronological list of past Claude review sessions |
 | `claude-usage-quick-ask.sh` | Quick Claude Code Usage | Check Claude Code usage stats |
 | `copy-file-contents.sh` | Copy file contents | - |
+| `finder-actions.sh` | Finder Actions | Open the frontmost Finder directory in a terminal app |
 | `ikdb-cheatsheet.sh` | IKDB Cheatsheet | Open IKDB Cheatsheet to view all shortcuts |
 | `ikdb-query.sh` | IKDB Query | Open IKDB Query Widget to check if a key combo is taken |
 | `ikdb-quick-add.sh` | IKDB Quick Add | Open IKDB Quick Add to capture a new keybinding |
@@ -40,4 +41,4 @@ Custom Raycast script commands for quick actions and automation.
 4. The README will be auto-updated before push
 
 ---
-*Last updated: 2026-02-18*
+*Last updated: 2026-02-19*
