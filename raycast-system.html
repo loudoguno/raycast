@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raycast System Dashboard</title>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a2e;
+  --surface3: #22223a;
+  --border: #2a2a4a;
+  --text: #e0e0f0;
+  --text-dim: #8888aa;
+  --accent: #3B82F6;
+  --green: #22c55e;
+  --orange: #f97316;
+  --red: #ef4444;
+  --purple: #a855f7;
+  --cyan: #06b6d4;
+  --yellow: #eab308;
+  --pink: #ec4899;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+::selection { background: var(--accent); color: white; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10, 10, 15, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+header h1 {
+  font-size: 16px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-meta {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+nav {
+  display: flex;
+  gap: 4px;
+  padding: 8px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 49px;
+  z-index: 99;
+  overflow-x: auto;
+}
+
+.nav-btn {
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.nav-btn:hover { color: var(--text); background: var(--surface2); }
+.nav-btn.active {
+  color: var(--accent);
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+main { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+
+.page { display: none; animation: fadeIn 0.3s ease; }
+.page.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.stat-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+  transform: translateY(-1px);
+}
+
+.stat-icon { font-size: 24px; margin-bottom: 6px; }
+.stat-value { font-size: 28px; font-weight: 800; color: var(--accent); }
+.stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: all 0.2s;
+}
+
+.card:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.05);
+}
+
+.card h2 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card h3 {
+  font-size: 12px;
+  font-weight: 600;
+  margin: 12px 0 8px;
+  color: var(--text);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-blue { background: rgba(59, 130, 246, 0.15); color: var(--accent); }
+.badge-green { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+.badge-purple { background: rgba(168, 85, 247, 0.15); color: var(--purple); }
+.badge-orange { background: rgba(249, 115, 22, 0.15); color: var(--orange); }
+.badge-cyan { background: rgba(6, 182, 212, 0.15); color: var(--cyan); }
+.badge-yellow { background: rgba(234, 179, 8, 0.15); color: var(--yellow); }
+.badge-pink { background: rgba(236, 72, 153, 0.15); color: var(--pink); }
+.badge-red { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  text-align: left;
+  padding: 8px 12px;
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+td { padding: 8px 12px; border-top: 1px solid var(--border); }
+tr:hover td { background: rgba(59, 130, 246, 0.03); }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.link-row:last-child { border-bottom: none; }
+.link-row .label { color: var(--text-dim); min-width: 140px; }
+
+.machine-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.machine-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.dot-green { background: var(--green); }
+.dot-blue { background: var(--accent); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px;
+  background: var(--surface2);
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.flow-step {
+  padding: 6px 12px;
+  background: var(--surface3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.flow-arrow { color: var(--accent); font-weight: bold; }
+
+.ext-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.ext-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1);
+}
+
+.ext-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.ext-title {
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ext-desc { color: var(--text-dim); font-size: 11px; margin-bottom: 10px; }
+
+.ext-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cmd-count {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.script-category {
+  padding: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.script-category summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+
+.script-category summary::-webkit-details-marker { display: none; }
+
+.script-category summary::before {
+  content: '\25B6';
+  font-size: 8px;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+}
+
+.script-category[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.script-list {
+  margin-top: 10px;
+  padding-left: 0;
+  list-style: none;
+}
+
+.script-list li {
+  padding: 6px 10px;
+  border-left: 2px solid var(--border);
+  margin-bottom: 4px;
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+  transition: border-color 0.2s;
+}
+
+.script-list li:hover { border-color: var(--accent); }
+.script-name { font-weight: 600; color: var(--text); }
+.script-desc { color: var(--text-dim); margin-left: 12px; }
+
+.arch-diagram {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+}
+
+.arch-layer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+
+.arch-node {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid;
+  transition: transform 0.2s;
+}
+
+.arch-node:hover { transform: scale(1.05); }
+
+.arch-node-blue { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3); color: var(--accent); }
+.arch-node-green { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3); color: var(--green); }
+.arch-node-purple { background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.3); color: var(--purple); }
+.arch-node-orange { background: rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.3); color: var(--orange); }
+.arch-node-cyan { background: rgba(6, 182, 212, 0.1); border-color: rgba(6, 182, 212, 0.3); color: var(--cyan); }
+
+.arch-connector {
+  width: 2px;
+  height: 16px;
+  background: var(--border);
+  margin: 0 auto;
+}
+
+.arch-connector-h {
+  height: 2px;
+  flex: 1;
+  background: var(--border);
+  min-width: 20px;
+}
+
+.callout {
+  padding: 12px 16px;
+  border-radius: 6px;
+  border-left: 3px solid;
+  margin: 12px 0;
+  font-size: 12px;
+}
+
+.callout-blue { border-color: var(--accent); background: rgba(59, 130, 246, 0.05); }
+.callout-green { border-color: var(--green); background: rgba(34, 197, 94, 0.05); }
+.callout-orange { border-color: var(--orange); background: rgba(249, 115, 22, 0.05); }
+
+code {
+  background: var(--surface3);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.search-box {
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  width: 200px;
+  transition: border-color 0.2s;
+}
+
+.search-box:focus { outline: none; border-color: var(--accent); }
+
+.hidden { display: none !important; }
+
+@media (max-width: 1200px) {
+  .stats-row { grid-template-columns: repeat(3, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Raycast System Dashboard</h1>
+  <div class="header-meta">
+    <span>loudoguno/raycast</span> &middot;
+    <span>Last updated: Feb 2026</span>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" onclick="showPage('overview')">Overview</button>
+  <button class="nav-btn" onclick="showPage('extensions')">Extensions</button>
+  <button class="nav-btn" onclick="showPage('scripts')">Scripts</button>
+  <button class="nav-btn" onclick="showPage('machines')">Machines</button>
+  <button class="nav-btn" onclick="showPage('architecture')">Architecture</button>
+  <button class="nav-btn" onclick="showPage('workflow')">Workflow</button>
+</nav>
+
+<main>
+
+<!-- ==================== OVERVIEW ==================== -->
+<div id="overview" class="page active">
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon">🧩</div>
+      <div class="stat-value">5</div>
+      <div class="stat-label">Extensions</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">19</div>
+      <div class="stat-value" style="font-size: 22px;">Commands</div>
+      <div class="stat-label">Extension Commands</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📜</div>
+      <div class="stat-value">32</div>
+      <div class="stat-label">Script Commands</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💻</div>
+      <div class="stat-value">2</div>
+      <div class="stat-label">Machines</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">📦</div>
+      <div class="stat-value">1</div>
+      <div class="stat-label">Git Repo</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>📍 Quick Reference</h2>
+      <div class="link-row">
+        <span class="label">GitHub Repo</span>
+        <a href="https://github.com/loudoguno/raycast" target="_blank">github.com/loudoguno/raycast</a>
+      </div>
+      <div class="link-row">
+        <span class="label">Local Path</span>
+        <code>~/code/raycast/</code> <span class="badge badge-green">both machines</span>
+      </div>
+      <div class="link-row">
+        <span class="label">Installed Extensions</span>
+        <code>~/.config/raycast/extensions/</code>
+      </div>
+      <div class="link-row">
+        <span class="label">Raycast Config</span>
+        <code>~/.config/raycast/config.json</code>
+      </div>
+      <div class="link-row">
+        <span class="label">Archived Repo</span>
+        <span style="color: var(--text-dim); text-decoration: line-through;">loudoguno/extensions</span>
+        <span class="badge badge-red">archived</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🗂 Repository Structure</h2>
+      <pre style="font-size: 11px; color: var(--text-dim); line-height: 1.8;">
+<span style="color: var(--accent);">~/code/raycast/</span>
+├── <span style="color: var(--green);">extensions/</span>     <span style="color: var(--text-dim);">← 5 custom extensions</span>
+│   ├── balloons/
+│   ├── balloons-fancy/
+│   ├── claude-built/
+│   ├── claude-usage/
+│   ├── finder-actions/
+│   ├── docs/          <span style="color: var(--text-dim);">← dev reference</span>
+│   └── templates/     <span style="color: var(--text-dim);">← starter templates</span>
+├── <span style="color: var(--orange);">scripts/</span>        <span style="color: var(--text-dim);">← 32 script commands</span>
+│   ├── pai/           <span style="color: var(--text-dim);">← 8 PAI scripts</span>
+│   ├── g-scripts/     <span style="color: var(--text-dim);">← 2 imported</span>
+│   └── *.sh           <span style="color: var(--text-dim);">← 22 main scripts</span>
+├── <span style="color: var(--text-dim);">assets/</span>
+├── <span style="color: var(--text-dim);">snippets/</span>
+├── CLAUDE.md
+└── README.md</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>⚡ Sync Status</h2>
+    <div class="grid-2">
+      <div class="machine-card">
+        <h3><span class="dot dot-green"></span> mxb <span class="badge badge-green">primary</span></h3>
+        <div class="link-row"><span class="label">Type</span> MacBook Pro (NYC)</div>
+        <div class="link-row"><span class="label">Repo</span> <code>~/code/raycast/</code></div>
+        <div class="link-row"><span class="label">Remote</span> loudoguno/raycast.git</div>
+        <div class="link-row"><span class="label">Extensions Installed</span> ~342</div>
+      </div>
+      <div class="machine-card">
+        <h3><span class="dot dot-blue"></span> mx3 <span class="badge badge-blue">synced</span></h3>
+        <div class="link-row"><span class="label">Type</span> Mac Studio (KY)</div>
+        <div class="link-row"><span class="label">Repo</span> <code>~/code/raycast/</code></div>
+        <div class="link-row"><span class="label">Remote</span> loudoguno/raycast.git</div>
+        <div class="link-row"><span class="label">Extensions Installed</span> ~339</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== EXTENSIONS ==================== -->
+<div id="extensions" class="page">
+
+  <div class="card" style="margin-bottom: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0; border: none; padding: 0;">🧩 Custom Extensions</h2>
+      <input type="text" class="search-box" placeholder="Search extensions..." oninput="filterExtensions(this.value)">
+    </div>
+  </div>
+
+  <div class="grid-3" id="ext-grid">
+
+    <div class="ext-card" data-name="balloons" onclick="toggleExtDetail(this)">
+      <div class="ext-header">
+        <div class="ext-title">🎈 Balloons</div>
+        <div class="cmd-count">1</div>
+      </div>
+      <div class="ext-desc">Browser-based balloon celebration. 30 balloons, 8 colors, auto-close after 8s.</div>
+      <div class="ext-meta">
+        <span class="badge badge-blue">TypeScript</span>
+        <span class="badge badge-green">no-view</span>
+      </div>
+      <div class="ext-detail hidden" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+        <table>
+          <tr><td style="color: var(--text-dim);">Tech</td><td>TypeScript + HTML/CSS animations</td></tr>
+          <tr><td style="color: var(--text-dim);">Display</td><td>Opens in default browser</td></tr>
+          <tr><td style="color: var(--text-dim);">Setup</td><td><code>npm install && npm run dev</code></td></tr>
+          <tr><td style="color: var(--text-dim);">Files</td><td>1 source file (balloons.tsx)</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="ext-card" data-name="balloons-fancy" onclick="toggleExtDetail(this)">
+      <div class="ext-header">
+        <div class="ext-title">✨ Balloons Fancy</div>
+        <div class="cmd-count">11</div>
+      </div>
+      <div class="ext-desc">Native macOS system-wide overlay. 11 visual effects, 50-700 particles, 24 colors.</div>
+      <div class="ext-meta">
+        <span class="badge badge-blue">TypeScript</span>
+        <span class="badge badge-purple">Swift/SwiftUI</span>
+        <span class="badge badge-green">no-view</span>
+      </div>
+      <div class="ext-detail hidden" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+        <table>
+          <tr><td style="color: var(--text-dim);">Effects</td><td>🎈 🎆 ❄️ 🧁 🔥 🪶 🍺 🍁 🌈 👾 🪐</td></tr>
+          <tr><td style="color: var(--text-dim);">Architecture</td><td>TS launcher + native Swift app (BalloonsApp.app)</td></tr>
+          <tr><td style="color: var(--text-dim);">Display</td><td>Borderless transparent NSWindow overlay</td></tr>
+          <tr><td style="color: var(--text-dim);">Setup</td><td><code>cd BalloonsApp && ./build.sh</code> then install to /Applications/</td></tr>
+          <tr><td style="color: var(--text-dim);">Files</td><td>11 .tsx commands + 12 Swift views</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="ext-card" data-name="claude-built" onclick="toggleExtDetail(this)">
+      <div class="ext-header">
+        <div class="ext-title">🛠 Claude Built</div>
+        <div class="cmd-count">1</div>
+      </div>
+      <div class="ext-desc">Unified palette for all Claude-built skills, tools, scripts, and aliases.</div>
+      <div class="ext-meta">
+        <span class="badge badge-blue">TypeScript</span>
+        <span class="badge badge-cyan">view</span>
+      </div>
+      <div class="ext-detail hidden" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+        <table>
+          <tr><td style="color: var(--text-dim);">Registry</td><td>Scans skills, CLI tools, AIA tools, scripts, aliases</td></tr>
+          <tr><td style="color: var(--text-dim);">Features</td><td>Search, favorites, usage tracking, rich actions</td></tr>
+          <tr><td style="color: var(--text-dim);">Data</td><td><code>~/.claude/claude-built-registry.json</code></td></tr>
+          <tr><td style="color: var(--text-dim);">Files</td><td>4 source files + registry generator script</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="ext-card" data-name="claude-usage" onclick="toggleExtDetail(this)">
+      <div class="ext-header">
+        <div class="ext-title">📊 Claude Usage</div>
+        <div class="cmd-count">5</div>
+      </div>
+      <div class="ext-desc">Subscription usage monitoring + daily/weekly/monthly productivity summaries.</div>
+      <div class="ext-meta">
+        <span class="badge badge-blue">TypeScript</span>
+        <span class="badge badge-orange">AppleScript</span>
+        <span class="badge badge-cyan">view</span>
+        <span class="badge badge-yellow">menu-bar</span>
+      </div>
+      <div class="ext-detail hidden" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+        <table>
+          <tr><td style="color: var(--text-dim);">Commands</td><td>Usage dashboard, menu bar, daily/weekly/monthly summaries</td></tr>
+          <tr><td style="color: var(--text-dim);">Data Source</td><td>Safari automation via AppleScript (claude.ai/settings/usage)</td></tr>
+          <tr><td style="color: var(--text-dim);">Requires</td><td>Safari + "Allow JavaScript from Apple Events"</td></tr>
+          <tr><td style="color: var(--text-dim);">Files</td><td>5 commands + 2 utility modules</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="ext-card" data-name="finder-actions" onclick="toggleExtDetail(this)">
+      <div class="ext-header">
+        <div class="ext-title">📂 Finder Actions</div>
+        <div class="cmd-count">1</div>
+      </div>
+      <div class="ext-desc">Action palette for the frontmost Finder window. Open in terminal, and more.</div>
+      <div class="ext-meta">
+        <span class="badge badge-blue">TypeScript</span>
+        <span class="badge badge-cyan">view</span>
+      </div>
+      <div class="ext-detail hidden" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);">
+        <table>
+          <tr><td style="color: var(--text-dim);">Actions</td><td>Open in Terminal, Ghostty, iTerm, Warp</td></tr>
+          <tr><td style="color: var(--text-dim);">Setup</td><td><code>npm install && npm run dev</code></td></tr>
+          <tr><td style="color: var(--text-dim);">Files</td><td>1 source file (index.tsx)</td></tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== SCRIPTS ==================== -->
+<div id="scripts" class="page">
+
+  <div class="card" style="margin-bottom: 16px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2 style="margin: 0; border: none; padding: 0;">📜 Script Commands <span class="badge badge-blue">32 total</span></h2>
+      <input type="text" class="search-box" placeholder="Search scripts..." oninput="filterScripts(this.value)">
+    </div>
+  </div>
+
+  <div id="scripts-list">
+
+    <details class="script-category" open>
+      <summary>🤖 Claude & AI <span class="badge badge-purple" style="margin-left: 8px;">6</span></summary>
+      <ul class="script-list">
+        <li><span class="script-name">claude-code-here.sh</span><span class="script-desc">Open current Finder directory in Claude Code</span></li>
+        <li><span class="script-name">claude-code-open.sh</span><span class="script-desc">Open Claude Code in a project by number or path</span></li>
+        <li><span class="script-name">claude-code-recent.sh</span><span class="script-desc">Open Claude Code in a recent project directory</span></li>
+        <li><span class="script-name">claude-review-file.sh</span><span class="script-desc">Review focused file with Claude Code</span></li>
+        <li><span class="script-name">claude-review-history.sh</span><span class="script-desc">Browse past Claude review sessions</span></li>
+        <li><span class="script-name">claude-usage-quick-ask.sh</span><span class="script-desc">Quick Claude Code usage stats (last 7 days)</span></li>
+      </ul>
+    </details>
+
+    <details class="script-category" open>
+      <summary>🧠 PAI <span class="badge badge-pink" style="margin-left: 8px;">8</span></summary>
+      <ul class="script-list">
+        <li><span class="script-name">pai/ask-pai.sh</span><span class="script-desc">Open PAI inbox for quick questions</span></li>
+        <li><span class="script-name">pai/pai-quick-ask.sh</span><span class="script-desc">Open new terminal with PAI inbox</span></li>
+        <li><span class="script-name">pai/pai-dashboard.sh</span><span class="script-desc">Show PAI status in menu bar</span></li>
+        <li><span class="script-name">pai/pai-settings.sh</span><span class="script-desc">Open PAI Settings Dashboard</span></li>
+        <li><span class="script-name">pai/pai-voice-toggle.sh</span><span class="script-desc">Toggle PAI voice output</span></li>
+        <li><span class="script-name">pai/anki-review.sh</span><span class="script-desc">Review due Anki flashcards</span></li>
+        <li><span class="script-name">pai/live-narrator.sh</span><span class="script-desc">AI narrates camera feed (5 styles)</span></li>
+        <li><span class="script-name">pai/live-narrator-quick.sh</span><span class="script-desc">Start narrator immediately</span></li>
+      </ul>
+    </details>
+
+    <details class="script-category">
+      <summary>⌨️ Keybindings <span class="badge badge-cyan" style="margin-left: 8px;">5</span></summary>
+      <ul class="script-list">
+        <li><span class="script-name">keybindings-claude.sh</span><span class="script-desc">Open Claude Code in keybinding workspace</span></li>
+        <li><span class="script-name">kbexp.sh</span><span class="script-desc">Launch keybinding explorer (GUI/TUI)</span></li>
+        <li><span class="script-name">ikdb-query.sh</span><span class="script-desc">Check if key combo is taken</span></li>
+        <li><span class="script-name">ikdb-cheatsheet.sh</span><span class="script-desc">View all shortcuts</span></li>
+        <li><span class="script-name">ikdb-quick-add.sh</span><span class="script-desc">Capture a new keybinding</span></li>
+      </ul>
+    </details>
+
+    <details class="script-category">
+      <summary>🔧 System Utilities <span class="badge badge-orange" style="margin-left: 8px;">5</span></summary>
+      <ul class="script-list">
+        <li><span class="script-name">stickies-grid.sh</span><span class="script-desc">Arrange stickies in uniform grid</span></li>
+        <li><span class="script-name">stickies-timeline.sh</span><span class="script-desc">Arrange stickies by creation date</span></li>
+        <li><span class="script-name">stickies-info.sh</span><span class="script-desc">Show stickies info</span></li>
+        <li><span class="script-name">toggle-microphone.applescript</span><span class="script-desc">Toggle mic input on/off</span></li>
+        <li><span class="script-name">restart-all.sh</span><span class="script-desc">Reload Goku, Karabiner, Slate, Raycast</span></li>
+      </ul>
+    </details>
+
+    <details class="script-category">
+      <summary>📁 File Operations <span class="badge badge-green" style="margin-left: 8px;">3</span></summary>
+      <ul class="script-list">
+        <li><span class="script-name">finder-actions.sh</span><span class="script-desc">Open Finder directory in Terminal/Ghostty/iTerm</span></li>
+        <li><span class="script-name">copy-file-contents.sh</span><span class="script-desc">Copy selected Finder file contents to clipboard</span></li>
+        <li><span class="script-name">copy-content-of-selected-file-in-finder.applescript</span><span class="script-desc">Same (AppleScript variant)</span></li>
+      </ul>
+    </details>
+
+    <details class="script-category">
+      <summary>🌐 Browser & Apps <span class="badge badge-yellow" style="margin-left: 8px;">3</span></summary>
+      <ul class="script-list">
+        <li><span class="script-name">chrome-profile-my-old-kentucky-host.sh</span><span class="script-desc">Switch Chrome profile for KY house</span></li>
+        <li><span class="script-name">abb-quick-replies-ky-house-chrome-profile.sh</span><span class="script-desc">Open Airbnb quick replies in KY profile</span></li>
+        <li><span class="script-name">list-obsidiain-vaults.applescript</span><span class="script-desc">List Obsidian vaults</span></li>
+      </ul>
+    </details>
+
+    <details class="script-category">
+      <summary>📦 Other <span class="badge badge-blue" style="margin-left: 8px;">4</span></summary>
+      <ul class="script-list">
+        <li><span class="script-name">chezmoi-update.sh</span><span class="script-desc">Check for and apply dotfile updates</span></li>
+        <li><span class="script-name">new-git-project-directory.sh</span><span class="script-desc">Create new project in ~/projects with git init</span></li>
+        <li><span class="script-name">healthcheck.sh</span><span class="script-desc">System health check utility</span></li>
+        <li><span class="script-name">get-menubar-commands.applescript</span><span class="script-desc">Export menu commands of front app</span></li>
+      </ul>
+    </details>
+
+  </div>
+</div>
+
+<!-- ==================== MACHINES ==================== -->
+<div id="machines" class="page">
+
+  <div class="card">
+    <h2>💻 Machine Configuration</h2>
+    <div class="grid-2">
+      <div class="machine-card">
+        <h3><span class="dot dot-green"></span> mxb &mdash; MacBook Pro</h3>
+        <table>
+          <tr><td style="color: var(--text-dim); width: 160px;">Location</td><td>NYC</td></tr>
+          <tr><td style="color: var(--text-dim);">Role</td><td>Primary development machine</td></tr>
+          <tr><td style="color: var(--text-dim);">Repo Path</td><td><code>~/code/raycast/</code></td></tr>
+          <tr><td style="color: var(--text-dim);">Remote</td><td>loudoguno/raycast.git (origin)</td></tr>
+          <tr><td style="color: var(--text-dim);">Raycast Extensions</td><td>~342 installed</td></tr>
+          <tr><td style="color: var(--text-dim);">Network</td><td>Tailscale (for SSH to mx3)</td></tr>
+          <tr><td style="color: var(--text-dim);">Old Repo</td><td><code>~/code/extensions/</code> <span class="badge badge-red">to delete</span></td></tr>
+        </table>
+      </div>
+      <div class="machine-card">
+        <h3><span class="dot dot-blue"></span> mx3 &mdash; Mac Studio</h3>
+        <table>
+          <tr><td style="color: var(--text-dim); width: 160px;">Location</td><td>KY</td></tr>
+          <tr><td style="color: var(--text-dim);">Role</td><td>Secondary / synced machine</td></tr>
+          <tr><td style="color: var(--text-dim);">Repo Path</td><td><code>~/code/raycast/</code></td></tr>
+          <tr><td style="color: var(--text-dim);">Remote</td><td>loudoguno/raycast.git (origin)</td></tr>
+          <tr><td style="color: var(--text-dim);">Raycast Extensions</td><td>~339 installed</td></tr>
+          <tr><td style="color: var(--text-dim);">Network</td><td>Tailscale (SSH accessible as <code>mx3</code>)</td></tr>
+          <tr><td style="color: var(--text-dim);">Cleanup Done</td><td>Removed nested .git, removed linear/ clone</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔄 Sync Workflow</h2>
+    <div class="flow">
+      <div class="flow-step">Edit on mxb or mx3</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">git add + commit</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">git push</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">GitHub (loudoguno/raycast)</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">git pull (other machine)</div>
+    </div>
+
+    <div class="callout callout-blue" style="margin-top: 16px;">
+      <strong>Scripts</strong> auto-reload in Raycast after pull. <strong>Extensions</strong> need <code>npm run dev</code> if source changed.
+    </div>
+
+    <h3>What Lives Where</h3>
+    <table>
+      <thead>
+        <tr><th>Type</th><th>Location</th><th>Synced How</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Custom extensions (source)</td><td><code>~/code/raycast/extensions/</code></td><td>git push/pull</td></tr>
+        <tr><td>Script commands</td><td><code>~/code/raycast/scripts/</code></td><td>git push/pull</td></tr>
+        <tr><td>Raycast Store extensions</td><td><code>~/.config/raycast/extensions/</code></td><td>Raycast cloud sync</td></tr>
+        <tr><td>Raycast config</td><td><code>~/.config/raycast/config.json</code></td><td>Raycast cloud sync</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== ARCHITECTURE ==================== -->
+<div id="architecture" class="page">
+
+  <div class="card">
+    <h2>📐 System Architecture</h2>
+    <div class="arch-diagram">
+      <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 12px;">How your Raycast customizations flow</div>
+
+      <div class="arch-layer">
+        <div class="arch-node arch-node-blue">GitHub: loudoguno/raycast</div>
+      </div>
+      <div class="arch-connector"></div>
+      <div class="arch-layer">
+        <div class="arch-node arch-node-green">mxb: ~/code/raycast/</div>
+        <div class="arch-connector-h"></div>
+        <div class="arch-node arch-node-green">mx3: ~/code/raycast/</div>
+      </div>
+      <div class="arch-connector"></div>
+      <div class="arch-layer">
+        <div class="arch-node arch-node-purple">extensions/</div>
+        <div class="arch-node arch-node-orange">scripts/</div>
+        <div class="arch-node arch-node-cyan">assets/</div>
+      </div>
+      <div class="arch-connector"></div>
+      <div class="arch-layer">
+        <div class="arch-node arch-node-purple">Raycast (imported)</div>
+        <div class="arch-node arch-node-orange">Raycast (script dir)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🏗 Architecture Decisions (Feb 2026)</h2>
+
+    <h3>Why a monorepo?</h3>
+    <div class="callout callout-green">
+      Scripts and extensions are the same concern: <strong>"my Raycast customizations."</strong>
+      One <code>git pull</code> syncs everything. One repo, one remote, one branch.
+    </div>
+
+    <h3>Why not git submodules?</h3>
+    <div class="callout callout-orange">
+      Submodules require <code>git submodule update --init --recursive</code> on every pull.
+      Forgetting this = the exact desync we cleaned up. Submodules solve multi-team problems we don't have.
+    </div>
+
+    <h3>Why not separate repos?</h3>
+    <div class="callout callout-orange">
+      We had a separate <code>loudoguno/extensions</code> repo. It drifted &mdash; identical files, divergent histories,
+      a nested <code>.git</code> on mx3, confusion about which was canonical. Two repos for one person = guaranteed drift.
+    </div>
+
+    <h3>What was cleaned up</h3>
+    <table>
+      <thead><tr><th>Action</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>Archived <code>loudoguno/extensions</code></td><td>Duplicate repo, subset of raycast repo</td></tr>
+        <tr><td>Removed nested <code>.git</code> on mx3</td><td>Was dual-tracking files in two repos</td></tr>
+        <tr><td>Removed <code>extensions/linear/</code> on mx3</td><td>Unmodified clone of official extension, no remote</td></tr>
+        <tr><td>Removed <code>extensions/agents/</code></td><td>Stale SalesSprint scaffolding (Oct 2025)</td></tr>
+        <tr><td>Removed nested <code>balloons/balloons/</code></td><td>Duplicate directory structure</td></tr>
+        <tr><td>Removed stale PLAN.md files</td><td>Outdated plans never executed</td></tr>
+        <tr><td>Updated <code>.gitignore</code></td><td>Added package-lock.json, build/, raycast-env.d.ts, editor state</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>📤 Publishing to Raycast Store</h2>
+    <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 8px;">
+      If you want to publish an extension publicly:
+    </p>
+    <div class="flow">
+      <div class="flow-step">Develop in this repo</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">Fork raycast/extensions</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">Copy extension to fork</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">Submit PR</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">Raycast Store</div>
+    </div>
+    <p style="color: var(--text-dim); font-size: 11px; margin-top: 8px;">
+      This repo is your <strong>development workspace</strong>, not the distribution channel.
+    </p>
+  </div>
+</div>
+
+<!-- ==================== WORKFLOW ==================== -->
+<div id="workflow" class="page">
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>🧩 New Extension</h2>
+      <ol style="padding-left: 18px; font-size: 12px; line-height: 2;">
+        <li>Navigate to <code>~/code/raycast/extensions/</code></li>
+        <li>Use Raycast "Create Extension" or copy a template:<br>
+          <code>cp -r templates/hello-world-list my-ext</code></li>
+        <li>Edit <code>package.json</code> with extension metadata</li>
+        <li><code>npm install && npm run dev</code></li>
+        <li>Test in Raycast (search for your command name)</li>
+        <li><code>git add && git commit && git push</code></li>
+        <li>On other machine: <code>git pull && cd extensions/my-ext && npm install && npm run dev</code></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>📜 New Script Command</h2>
+      <ol style="padding-left: 18px; font-size: 12px; line-height: 2;">
+        <li>Navigate to <code>~/code/raycast/scripts/</code></li>
+        <li>Copy the template:<br>
+          <code>cp template-script-for-raycast.sh my-script.sh</code></li>
+        <li><code>chmod +x my-script.sh</code></li>
+        <li>Edit Raycast metadata headers:<br>
+          <code>@raycast.title</code>, <code>@raycast.description</code>, etc.</li>
+        <li>Script appears in Raycast immediately</li>
+        <li><code>git add && git commit && git push</code></li>
+        <li>On other machine: <code>git pull</code> (auto-reloads)</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔧 Extension Development Commands</h2>
+    <table>
+      <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>npm install</code></td><td>Install dependencies</td></tr>
+        <tr><td><code>npm run dev</code></td><td>Start dev mode (hot reload in Raycast)</td></tr>
+        <tr><td><code>npm run build</code></td><td>Build and validate extension</td></tr>
+        <tr><td><code>npm run lint</code></td><td>Check code style</td></tr>
+        <tr><td><code>npm run fix-lint</code></td><td>Auto-fix style issues</td></tr>
+        <tr><td><code>npm run publish</code></td><td>Publish to Raycast Store (submits PR)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>⚙️ balloons-fancy Build Process</h2>
+    <p style="color: var(--text-dim); font-size: 12px; margin-bottom: 12px;">
+      This extension requires building a native macOS app first:
+    </p>
+    <div class="flow">
+      <div class="flow-step">Edit Swift views</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">cd BalloonsApp && ./build.sh</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">cp -r build/BalloonsApp.app /Applications/</div>
+      <span class="flow-arrow">&#8594;</span>
+      <div class="flow-step">npm run dev</div>
+    </div>
+    <div class="callout callout-orange" style="margin-top: 12px;">
+      Must rebuild after any Swift file changes. The app must live in <code>/Applications/</code> for the extension to find it.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Checklist: Setting Up a New Machine</h2>
+    <ol style="padding-left: 18px; font-size: 12px; line-height: 2.2;">
+      <li>Install Raycast from <a href="https://raycast.com" target="_blank">raycast.com</a></li>
+      <li><code>git clone https://github.com/loudoguno/raycast.git ~/code/raycast</code></li>
+      <li>Raycast &gt; Extensions &gt; Script Commands &gt; Add Directories &gt; <code>~/code/raycast/scripts/</code></li>
+      <li>For each extension you want to use:<br>
+        <code>cd ~/code/raycast/extensions/{name} && npm install && npm run dev</code></li>
+      <li>For balloons-fancy: also build and install BalloonsApp (see above)</li>
+      <li>For claude-usage: enable Safari &gt; Develop &gt; Allow JavaScript from Apple Events</li>
+    </ol>
+  </div>
+</div>
+
+</main>
+
+<script>
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function toggleExtDetail(card) {
+  const detail = card.querySelector('.ext-detail');
+  if (detail) detail.classList.toggle('hidden');
+}
+
+function filterExtensions(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.ext-card').forEach(card => {
+    const name = card.dataset.name || '';
+    const text = card.textContent.toLowerCase();
+    card.style.display = (text.includes(q) || name.includes(q)) ? '' : 'none';
+  });
+}
+
+function filterScripts(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.script-category').forEach(cat => {
+    let hasVisible = false;
+    cat.querySelectorAll('.script-list li').forEach(li => {
+      const match = li.textContent.toLowerCase().includes(q);
+      li.style.display = match ? '' : 'none';
+      if (match) hasVisible = true;
+    });
+    cat.style.display = hasVisible ? '' : 'none';
+    if (hasVisible && q) cat.open = true;
+  });
+}
+</script>
+</body>
+</html>

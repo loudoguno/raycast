@@ -22,16 +22,16 @@ This file is for brainstorming and tracking ideas for new Raycast extensions.
 
 ## Ideas
 
-### [Your First Extension Idea Here]
-- **Description**:
-- **Use Case**:
+### Emoji PNG Export
+- **Description**: Select an emoji and get a high-res PNG on your Desktop (or clipboard)
+- **Use Case**: When you need an emoji as an image file for designs, presentations, or Slack
 - **Key Features**:
-  -
-  -
-  -
-- **UI Type**:
-- **APIs/Services**:
-- **Priority**:
+  - Presents emoji picker to user
+  - Generates PNG of selected emoji
+  - Option to save to Desktop or copy to clipboard
+- **UI Type**: Form
+- **APIs/Services**: Emojipedia or system emoji rendering
+- **Priority**: Medium
 - **Status**: Idea
 
 ---

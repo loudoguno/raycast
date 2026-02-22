@@ -1,5 +1,24 @@
+# macOS
 .DS_Store
 **/.DS_Store
+
+# Dependencies
 **/node_modules/
+**/package-lock.json
+
+# Build outputs
 **/dist/
+**/build/
 **/*.tsbuildinfo
+
+# Raycast
+**/raycast-env.d.ts
+
+# Editor/Tool state
+**/.claude/sessions/
+**/.vscode/
+**/.idea/
+
+# Temporary
+*.log
+tmp/
