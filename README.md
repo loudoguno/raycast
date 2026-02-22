@@ -145,7 +145,7 @@ This repo is the single source of truth for Raycast customizations across machin
 | Machine | Hostname | Location | Status |
 |---------|----------|----------|--------|
 | MacBook Pro (NYC) | **mxb** | `~/code/raycast/` | Primary development |
-| Mac Studio (KY) | **mx3** | `~/code/raycast/` | Synced via git |
+| MacBook Pro M3 (KY) | **mx3** | `~/code/raycast/` | Synced via git |
 
 ### Syncing Between Machines
 
