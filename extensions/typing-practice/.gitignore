@@ -1,0 +1,10 @@
+node_modules/
+package-lock.json
+dist/
+build/
+raycast-env.d.ts
+.DS_Store
+.vscode/
+.idea/
+*.log
+tmp/
