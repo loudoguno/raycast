@@ -170,10 +170,21 @@ extension-name/
 
 ### Development Workflow
 
-1. Use Raycast's "Create Extension" command for new extensions
-2. Extensions are developed in this local repository, not the official Raycast extensions repo
-3. The `prepublishOnly` script prevents accidental npm publishes
-4. Publishing creates a PR to the official Raycast extensions repository
+1. Extensions are developed in this local repository, not the official Raycast extensions repo
+2. The `prepublishOnly` script prevents accidental npm publishes
+3. Publishing creates a PR to the official Raycast extensions repository
+
+### Forking Store Extensions
+
+**When adding features to an existing Raycast Store extension, ALWAYS fork it rather than creating a separate extension.** Raycast has a built-in "Fork Extension" action (select the extension in Raycast → Actions → Fork Extension). This:
+- Downloads the store extension's full source code to a local directory you choose
+- Replaces the store version with your local fork
+- Gives you all existing commands plus the ability to add your own
+- Avoids naming conflicts and duplicate commands in search results
+
+**Preferred workflow**: Fork → move source into this repo at `extensions/{name}/` → add your commands → `npm run dev`
+
+Trade-off: forked extensions don't receive store auto-updates. You own the code from that point.
 
 ### Safari Automation (Claude Usage)
 
