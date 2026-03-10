@@ -69,9 +69,13 @@ Each extension follows Raycast's standard structure:
 extension-name/
 ├── src/              # TypeScript/React source files
 │   ├── *.tsx         # Command entry points (one per command)
-│   └── utils/        # Shared utilities
+│   ├── tools/        # AI tool entry points (optional, for Raycast AI integration)
+│   ├── components/   # Shared React components
+│   ├── hooks/        # Custom React hooks
+│   ├── utils/        # Shared utilities (or helpers/, lib/, api/)
 ├── assets/           # Icons and images
-├── package.json      # Extension metadata and commands
+├── package.json      # Extension metadata, commands, and tools
+├── eslint.config.mjs # ESLint 9 flat config (extends @raycast)
 └── tsconfig.json     # TypeScript configuration
 ```
 
@@ -152,27 +156,32 @@ extension-name/
 ### Technology Stack
 
 - **TypeScript**: All extension logic
-- **React**: UI components via Raycast API
+- **React 19**: UI components via Raycast API
+- **Node.js 22+**: Runtime environment (required by Raycast)
 - **Swift 5 + SwiftUI**: Native macOS animations (balloons-fancy only)
 - **AppleScript**: Safari automation (claude-usage only)
 - **JXA (JavaScript for Automation)**: OmniFocus automation (omnifocus only)
-- **Node.js**: Runtime environment
+
+**Note**: Some extensions in this repo use older dependency versions (e.g., `@raycast/api` ^1.83, `@raycast/utils` ^1.17). Current latest is `@raycast/api` ^1.104 and `@raycast/utils` ^2.2. Update when convenient but test after upgrading — `@raycast/utils` v2 requires React 19.
 
 ## Important Notes
 
 ### Raycast Extension Specifics
 
-- **Hot Reload**: When running `npm run dev`, extensions remain loaded in Raycast even after stopping the dev server. Changes to code automatically reload.
+- **Hot Reload**: When running `npm run dev`, extensions remain loaded in Raycast even after stopping the dev server. Changes to code automatically reload (toggleable in Preferences > Advanced).
 - **Command Modes**:
   - `"no-view"` - Background command with no UI (e.g., balloons)
   - `"view"` - Full UI component (e.g., show-usage)
   - `"menu-bar"` - Menu bar extra with optional interval polling
+- **AI Tools**: Extensions can declare `tools` in package.json (separate from `commands`). Tools live in `src/tools/` and are callable by Raycast AI when the extension is @mentioned. Not shown in root search.
+- **ESLint**: Current standard is ESLint 9 flat config via `eslint.config.mjs` (not `.eslintrc.json`). Older extensions in this repo still use the legacy format.
+- **Platforms**: Extensions can declare `"platforms": ["macOS", "Windows"]` in package.json. Default is `["macOS"]`.
 
 ### Development Workflow
 
 1. Extensions are developed in this local repository, not the official Raycast extensions repo
-2. The `prepublishOnly` script prevents accidental npm publishes
-3. Publishing creates a PR to the official Raycast extensions repository
+2. Some older extensions have a `prepublishOnly` script to prevent accidental `npm publish` — this is optional and no longer scaffolded into new extensions
+3. Publishing via `ray publish` (or `npm run publish`) creates a PR to the official Raycast extensions repository
 
 ### Forking Store Extensions
 
