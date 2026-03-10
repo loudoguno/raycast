@@ -4,11 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a personal collection of custom Raycast extensions for macOS. The repository contains three distinct extensions:
+This is a personal collection of custom Raycast extensions for macOS. The repository contains four distinct extensions:
 
 1. **Balloons** - Browser-based celebration extension with HTML/CSS animations
 2. **Balloons Fancy** - Native macOS system overlay extension with 11 visual effects (balloons, fireworks, snow, etc.)
 3. **Claude Usage** - Utility to monitor Claude AI subscription usage limits via Safari automation
+4. **OmniFocus** - Custom OmniFocus integration with "Quick Add Anywhere" task creation
 
 ## Common Development Commands
 
@@ -126,12 +127,35 @@ extension-name/
 - `APPLESCRIPT_QUIET` - Only reads from existing Safari tabs, never opens windows (used by menu bar background refresh)
 - `APPLESCRIPT_INTERACTIVE` - Opens Safari and creates tabs if needed (used by manual refresh)
 
+#### 4. OmniFocus Extension
+- Uses JXA (JavaScript for Automation) via `@raycast/utils` `runAppleScript` with `language: "JavaScript"`
+- Requires OmniFocus Pro (for automation/scripting access)
+- Single JXA call fetches all projects and tasks with breadcrumb hierarchy
+- Task creation supports inbox, project, or subtask destinations
+- Repeat rules set via Omni Automation bridge (`evaluateJavascript`) since JXA's `repetitionRule` setter crashes
+
+**Commands**:
+- `quick-add-anywhere` - Fuzzy search projects/tasks, then create a task or subtask with name, tags, due, repeat, flag, note
+
+**Key Architecture**:
+- `src/lib/api/` - JXA scripts as TypeScript template literals
+- `src/lib/utils/execute-script.ts` - Core JXA runner wrapping `runAppleScript`
+- `src/lib/utils/escape-jxa.ts` - String escaping to prevent injection
+- `usePromise` (not `useCachedPromise`) for data fetching — avoids stale cache issues
+- `humanReadableOutput: true` in `runAppleScript` — `-ss` flag causes double-quoting issues
+
+**Known Gotchas**:
+- OmniFocus status enum must be compared via `String()` coercion, not direct equality
+- `whose()` clauses can throw type conversion errors — prefer JS-side filtering
+- `effectivelyDropped()` may not exist in all OmniFocus versions — wrap in try/catch
+
 ### Technology Stack
 
 - **TypeScript**: All extension logic
 - **React**: UI components via Raycast API
 - **Swift 5 + SwiftUI**: Native macOS animations (balloons-fancy only)
 - **AppleScript**: Safari automation (claude-usage only)
+- **JXA (JavaScript for Automation)**: OmniFocus automation (omnifocus only)
 - **Node.js**: Runtime environment
 
 ## Important Notes
@@ -166,11 +190,18 @@ The claude-usage extension requires specific Safari permissions:
 - App must be installed to `/Applications/` for the extension to find it
 - Each effect has its own Swift view file but all are compiled into one app bundle
 
+### OmniFocus Automation (OmniFocus Extension)
+
+The omnifocus extension requires OmniFocus Pro for scripting access:
+- **OmniFocus Pro**: Required for AppleScript/JXA automation
+- **Accessibility permissions**: System Settings > Privacy & Security > Accessibility > Raycast
+
 ## Testing
 
 - Test extensions by opening Raycast and searching for command names
 - For balloons-fancy, test each effect individually (11 total commands)
 - For claude-usage, ensure Safari can access claude.ai and permissions are granted
+- For omnifocus, ensure OmniFocus Pro is installed and Raycast has accessibility permissions
 
 ## File Locations
 
