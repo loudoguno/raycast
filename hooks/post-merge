@@ -1,0 +1,43 @@
+#!/bin/bash
+# post-merge hook: auto-rebuild Raycast extensions that changed during git pull
+#
+# How it works:
+#   1. Runs after every `git pull` (pull = fetch + merge, "merge" triggers this hook)
+#   2. Compares HEAD before and after the merge to find changed files
+#   3. For each extension with changes, runs `npm run build`
+#   4. You see a notification for each rebuilt extension
+#
+# Setup (one-time per machine):
+#   ln -sf ../../hooks/post-merge .git/hooks/post-merge
+#
+# Stored in repo at hooks/post-merge so it's version-controlled.
+# The symlink in .git/hooks/ is what git actually runs.
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Files changed in the merge (ORIG_HEAD = before pull, HEAD = after pull)
+CHANGED_FILES=$(git diff --name-only ORIG_HEAD HEAD 2>/dev/null)
+
+if [ -z "$CHANGED_FILES" ]; then
+  exit 0
+fi
+
+# Find which extensions had changes
+CHANGED_EXTENSIONS=$(echo "$CHANGED_FILES" | grep '^extensions/' | cut -d'/' -f2 | sort -u)
+
+if [ -z "$CHANGED_EXTENSIONS" ]; then
+  exit 0
+fi
+
+for ext in $CHANGED_EXTENSIONS; do
+  EXT_DIR="$REPO_ROOT/extensions/$ext"
+  if [ -f "$EXT_DIR/package.json" ] && grep -q '"build"' "$EXT_DIR/package.json" 2>/dev/null; then
+    echo "🔨 Rebuilding extension: $ext"
+    (cd "$EXT_DIR" && npm run build --silent 2>&1)
+    if [ $? -eq 0 ]; then
+      echo "   ✅ $ext rebuilt successfully"
+    else
+      echo "   ❌ $ext build failed"
+    fi
+  fi
+done

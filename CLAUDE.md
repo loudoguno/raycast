@@ -228,6 +228,33 @@ The omnifocus extension requires OmniFocus Pro for scripting access:
 - For claude-usage, ensure Safari can access claude.ai and permissions are granted
 - For omnifocus, ensure OmniFocus Pro is installed and Raycast has accessibility permissions
 
+## Machine Setup Checks
+
+**On session start, check the hostname.** If the machine is `mxb`, verify the following setup is complete:
+
+### Git post-merge hook (auto-rebuilds extensions after `git pull`)
+
+Check if the symlink exists:
+```bash
+ls -la .git/hooks/post-merge
+```
+If missing or not a symlink to `../../hooks/post-merge`, set it up:
+```bash
+ln -sf ../../hooks/post-merge .git/hooks/post-merge
+```
+
+### OmniFocus extension registration
+
+Check if the OmniFocus extension is registered with Raycast:
+```bash
+ls extensions/omnifocus/dist/
+```
+If `dist/` is missing or empty, the extension needs a first-time build + registration:
+```bash
+cd extensions/omnifocus && npm install && npm run build && npm run dev
+# Stop dev server (⌃+C) once Raycast loads the extension — it persists after that
+```
+
 ## File Locations
 
 - Extensions: `/Users/loudog/code/raycast/extensions/`
