@@ -31,3 +31,18 @@ export interface OmniFocusTag {
   id: string;
   name: string;
 }
+
+export type TodaySection = "overdue" | "due-today" | "flagged" | "due-soon";
+
+export interface TodayTask {
+  id: string;
+  name: string;
+  projectName: string | null;
+  tags: string[];
+  dueDate: string | null;
+  deferDate: string | null;
+  flagged: boolean;
+  estimatedMinutes: number | null;
+  noteExcerpt: string;
+  section: TodaySection;
+}

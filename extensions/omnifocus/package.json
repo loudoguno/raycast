@@ -14,6 +14,28 @@
       "subtitle": "OmniFocus",
       "description": "Search for a project or task, then add a new task or subtask there",
       "mode": "view"
+    },
+    {
+      "name": "show-today",
+      "title": "Show Today",
+      "subtitle": "OmniFocus",
+      "description": "Today's command center — overdue, due today, flagged, and due soon tasks with full actions",
+      "mode": "view"
+    },
+    {
+      "name": "quick-add-inbox",
+      "title": "Quick Add to Inbox",
+      "subtitle": "OmniFocus",
+      "description": "Instantly add a task to your OmniFocus inbox — zero UI, just type and go",
+      "mode": "no-view",
+      "arguments": [
+        {
+          "name": "task",
+          "placeholder": "Task name",
+          "type": "text",
+          "required": true
+        }
+      ]
     }
   ],
   "dependencies": {
