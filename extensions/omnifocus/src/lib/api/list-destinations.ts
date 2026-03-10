@@ -22,23 +22,21 @@ export async function listDestinations(): Promise<Destination[]> {
       depth: 0
     });
 
-    // Get all folders, filter to active ones in JS
+    // Get all folders (folders don't have a status() property in JXA)
     var allFolders = doc.flattenedFolders();
     for (var fi = 0; fi < allFolders.length; fi++) {
       var f = allFolders[fi];
-      var fStatus;
-      try { fStatus = String(f.status()); } catch(e) { continue; }
-      if (fStatus.indexOf('active') === -1) continue;
-
-      results.push({
-        id: f.id(),
-        name: f.name(),
-        type: 'folder',
-        breadcrumb: f.name(),
-        projectName: null,
-        hasChildren: true,
-        depth: 0
-      });
+      try {
+        results.push({
+          id: f.id(),
+          name: f.name(),
+          type: 'folder',
+          breadcrumb: f.name(),
+          projectName: null,
+          hasChildren: true,
+          depth: 0
+        });
+      } catch(e) { continue; }
     }
 
     // Get all projects, filter to active ones in JS

@@ -8,6 +8,9 @@ import {
   Toast,
   popToRoot,
   Color,
+  Clipboard,
+  open,
+  Keyboard,
 } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
 import { useState } from "react";
@@ -39,6 +42,15 @@ const REPEAT_METHODS = [
     value: "defer-after-completion" as RepetitionMethod,
   },
 ];
+
+function omnifocusUrl(dest: Destination): string | null {
+  if (dest.type === "inbox") return "omnifocus:///inbox";
+  if (dest.type === "project") return `omnifocus:///project/${dest.id}`;
+  if (dest.type === "task") return `omnifocus:///task/${dest.id}`;
+  if (dest.type === "folder") return `omnifocus:///folder/${dest.id}`;
+  if (dest.type === "tag") return `omnifocus:///tag/${dest.id}`;
+  return null;
+}
 
 export default function QuickAddAnywhere() {
   const [typeFilter, setTypeFilter] = useState("all");
@@ -129,6 +141,13 @@ export default function QuickAddAnywhere() {
           }
           actions={
             <ActionPanel>
+              {omnifocusUrl(dest) && (
+                <Action
+                  title="Open in OmniFocus"
+                  icon={Icon.Eye}
+                  onAction={() => open(omnifocusUrl(dest)!)}
+                />
+              )}
               <Action.Push
                 title={
                   dest.type === "task"
@@ -140,6 +159,7 @@ export default function QuickAddAnywhere() {
                         : "Add Task Here"
                 }
                 icon={Icon.Plus}
+                shortcut={{ modifiers: ["cmd"], key: "n" }}
                 target={
                   <TaskForm
                     destination={
@@ -155,6 +175,31 @@ export default function QuickAddAnywhere() {
                   />
                 }
               />
+              {omnifocusUrl(dest) && (
+                <Action
+                  title="Copy OmniFocus URL"
+                  icon={Icon.Link}
+                  shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+                  onAction={async () => {
+                    await Clipboard.copy(omnifocusUrl(dest)!);
+                    await showToast({ style: Toast.Style.Success, title: "URL copied" });
+                  }}
+                />
+              )}
+              {omnifocusUrl(dest) && (
+                <Action
+                  title="Copy as Markdown Link"
+                  icon={Icon.CodeBlock}
+                  shortcut={{ modifiers: ["cmd", "shift"], key: "m" }}
+                  onAction={async () => {
+                    const url = omnifocusUrl(dest)!;
+                    const md = `[${dest.name}](${url})`;
+                    const html = `<a href="${url}">${dest.name}</a>`;
+                    await Clipboard.copy({ text: md, html });
+                    await showToast({ style: Toast.Style.Success, title: "Markdown link copied" });
+                  }}
+                />
+              )}
             </ActionPanel>
           }
         />
@@ -189,6 +234,7 @@ function TaskForm({
     dueDate: Date | null;
     flagged: boolean;
     tags: string[];
+    newTags: string;
     repeat: string;
     repeatMethod: string;
     customRepeat: string;
@@ -207,11 +253,16 @@ function TaskForm({
     });
 
     try {
-      // Resolve tag names from IDs
-      const tagNames = values.tags.map((tagId) => {
+      // Resolve existing tag names from IDs + parse new tags
+      const existingTagNames = values.tags.map((tagId) => {
         const tag = tags.find((t) => t.id === tagId);
         return tag?.name ?? tagId;
       });
+      const newTagNames = (values.newTags ?? "")
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+      const tagNames = [...existingTagNames, ...newTagNames];
 
       const taskId = await addTask(destination, {
         name: values.name.trim(),
@@ -283,6 +334,13 @@ function TaskForm({
           <Form.TagPicker.Item key={tag.id} value={tag.id} title={tag.name} />
         ))}
       </Form.TagPicker>
+
+      <Form.TextField
+        id="newTags"
+        title="New Tags"
+        placeholder="tag1, tag2, ..."
+        info="Comma-separated. Creates tags if they don't exist."
+      />
 
       <Form.DatePicker
         id="dueDate"
