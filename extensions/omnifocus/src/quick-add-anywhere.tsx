@@ -41,6 +41,8 @@ const REPEAT_METHODS = [
 ];
 
 export default function QuickAddAnywhere() {
+  const [typeFilter, setTypeFilter] = useState("all");
+
   const {
     data: rawDestinations,
     isLoading: destinationsLoading,
@@ -53,26 +55,56 @@ export default function QuickAddAnywhere() {
   const destinations = Array.isArray(rawDestinations) ? rawDestinations : [];
   const tags = Array.isArray(rawTags) ? rawTags : [];
 
+  // Merge tags into the destination list as type "tag"
+  const tagDestinations: Destination[] = tags.map((tag) => ({
+    id: tag.id,
+    name: tag.name,
+    type: "tag" as const,
+    breadcrumb: tag.name,
+    projectName: null,
+    hasChildren: false,
+    depth: 0,
+  }));
+  const allDestinations = [...destinations, ...tagDestinations];
+
+  const filteredDestinations =
+    typeFilter === "all"
+      ? allDestinations
+      : allDestinations.filter((dest) => dest.type === typeFilter);
+
   function iconForDestination(dest: Destination) {
     if (dest.type === "inbox")
       return { source: Icon.Tray, tintColor: Color.Blue };
+    if (dest.type === "folder")
+      return { source: Icon.Folder, tintColor: Color.Yellow };
     if (dest.type === "project")
-      return { source: Icon.Folder, tintColor: Color.Purple };
+      return { source: Icon.AppWindowGrid2x2, tintColor: Color.Blue };
+    if (dest.type === "tag")
+      return { source: Icon.Tag, tintColor: Color.Green };
     if (dest.hasChildren) return { source: Icon.List, tintColor: Color.Orange };
     return { source: Icon.Circle, tintColor: Color.SecondaryText };
   }
 
   function depthPrefix(dest: Destination): string {
-    if (dest.type === "inbox" || dest.type === "project") return "";
-    return "  ".repeat(dest.depth - 1) + "└ ";
+    if (dest.type !== "task") return "";
+    return "  ".repeat(Math.max(0, dest.depth - 1)) + "└ ";
   }
 
   return (
     <List
       isLoading={destinationsLoading || tagsLoading}
       searchBarPlaceholder="Search projects and tasks..."
+      searchBarAccessory={
+        <List.Dropdown tooltip="Filter by Type" onChange={setTypeFilter}>
+          <List.Dropdown.Item title="All" value="all" icon={Icon.BulletPoints} />
+          <List.Dropdown.Item title="Folders" value="folder" icon={Icon.Folder} />
+          <List.Dropdown.Item title="Projects" value="project" icon={Icon.AppWindowGrid2x2} />
+          <List.Dropdown.Item title="Tasks" value="task" icon={Icon.Circle} />
+          <List.Dropdown.Item title="Tags" value="tag" icon={Icon.Tag} />
+        </List.Dropdown>
+      }
     >
-      {destinations.map((dest) => (
+      {filteredDestinations.map((dest) => (
         <List.Item
           key={dest.id}
           icon={iconForDestination(dest)}
@@ -83,25 +115,42 @@ export default function QuickAddAnywhere() {
               : undefined
           }
           accessories={
-            dest.hasChildren
-              ? [{ icon: Icon.ChevronRight, tooltip: "Has subtasks" }]
-              : dest.type === "project"
-                ? [{ tag: "Project" }]
-                : dest.type === "inbox"
-                  ? [{ tag: "Inbox" }]
-                  : []
+            dest.type === "folder"
+              ? [{ tag: "Folder" }]
+              : dest.type === "tag"
+                ? [{ tag: "Tag" }]
+                : dest.hasChildren
+                  ? [{ icon: Icon.ChevronRight, tooltip: "Has subtasks" }]
+                  : dest.type === "project"
+                    ? [{ tag: "Project" }]
+                    : dest.type === "inbox"
+                      ? [{ tag: "Inbox" }]
+                      : []
           }
           actions={
             <ActionPanel>
               <Action.Push
                 title={
-                  dest.type === "task" ? "Add Subtask Here" : "Add Task Here"
+                  dest.type === "task"
+                    ? "Add Subtask Here"
+                    : dest.type === "tag"
+                      ? "Add Task with Tag"
+                      : dest.type === "folder"
+                        ? "Add Task to Inbox"
+                        : "Add Task Here"
                 }
                 icon={Icon.Plus}
                 target={
                   <TaskForm
-                    destination={dest}
+                    destination={
+                      dest.type === "folder"
+                        ? { id: "__inbox__", name: "Inbox", type: "inbox", breadcrumb: "Inbox", projectName: null, hasChildren: false, depth: 0 }
+                        : dest.type === "tag"
+                          ? { id: "__inbox__", name: "Inbox", type: "inbox", breadcrumb: "Inbox", projectName: null, hasChildren: false, depth: 0 }
+                          : dest
+                    }
                     tags={tags}
+                    defaultTagIds={dest.type === "tag" ? [dest.id] : undefined}
                     onTaskAdded={revalidateDestinations}
                   />
                 }
@@ -117,10 +166,12 @@ export default function QuickAddAnywhere() {
 function TaskForm({
   destination,
   tags,
+  defaultTagIds,
   onTaskAdded,
 }: {
   destination: Destination;
   tags: { id: string; name: string }[];
+  defaultTagIds?: string[];
   onTaskAdded: () => void;
 }) {
   const [repeatValue, setRepeatValue] = useState("");
@@ -227,7 +278,7 @@ function TaskForm({
 
       <Form.Separator />
 
-      <Form.TagPicker id="tags" title="Tags">
+      <Form.TagPicker id="tags" title="Tags" defaultValue={defaultTagIds}>
         {tags.map((tag) => (
           <Form.TagPicker.Item key={tag.id} value={tag.id} title={tag.name} />
         ))}

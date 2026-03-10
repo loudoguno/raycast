@@ -1,4 +1,4 @@
-export type DestinationType = "inbox" | "project" | "task";
+export type DestinationType = "inbox" | "project" | "task" | "folder" | "tag";
 
 export interface Destination {
   id: string;

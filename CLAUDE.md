@@ -210,6 +210,11 @@ The claude-usage extension requires specific Safari permissions:
 - App must be installed to `/Applications/` for the extension to find it
 - Each effect has its own Swift view file but all are compiled into one app bundle
 
+### OmniFocus Project Tracking
+
+<!-- Used by /check-omnifocus skill to find associated OmniFocus project -->
+omnifocus_project: "Create OmniFocus Raycast Extension:"
+
 ### OmniFocus Automation (OmniFocus Extension)
 
 The omnifocus extension requires OmniFocus Pro for scripting access:
