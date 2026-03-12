@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "raycast",
+  "project_id": "9984fcdc-b005-4050-8f01-aa9b01d34530"
+}
