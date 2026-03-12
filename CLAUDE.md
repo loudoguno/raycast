@@ -243,6 +243,18 @@ If missing or not a symlink to `../../hooks/post-merge`, set it up:
 ln -sf ../../hooks/post-merge .git/hooks/post-merge
 ```
 
+### Beads issue tracker
+
+Check if `bd` is installed:
+```bash
+command -v bd >/dev/null && echo "OK" || echo "MISSING — run: brew install beads"
+```
+Then verify the database is detected:
+```bash
+bd info
+```
+If `bd info` fails, the `.beads/` directory may not have been pulled yet — run `git pull`.
+
 ### OmniFocus extension registration
 
 Check if the OmniFocus extension is registered with Raycast:
@@ -254,6 +266,44 @@ If `dist/` is missing or empty, the extension needs a first-time build + registr
 cd extensions/omnifocus && npm install && npm run build && npm run dev
 # Stop dev server (⌃+C) once Raycast loads the extension — it persists after that
 ```
+
+## Issue Tracking with Beads
+
+This repo uses **[beads](https://github.com/steveyegge/beads)** (`bd` CLI) for issue tracking. Issues live in `.beads/` and sync via git.
+
+### Setup on a new machine
+
+```bash
+# Install beads (requires Homebrew)
+brew install beads
+
+# After cloning/pulling, beads auto-discovers the .beads/ directory — no init needed.
+# Verify it works:
+bd info
+bd ready    # Show actionable issues
+```
+
+### Key commands
+
+```bash
+bd ready                  # Unblocked issues sorted by priority
+bd children <epic-id>     # Show issue tree under an epic
+bd show <id>              # Full issue details
+bd create "title" --priority 2 --type task --labels health,health:smell --description "..."
+bd update <id> --claim    # Claim work
+bd close <id> --reason "Fixed in commit abc123"
+bd sync                   # Sync with git
+```
+
+### Health check system
+
+The `/health-check` skill runs periodic code health sweeps and files findings as beads:
+- Creates an **epic** per run (labeled `health,health-run`)
+- Individual findings become children of the epic
+- KV metadata tracks run history: `bd kv get health-check.last-run`
+- Deduplicates against prior runs before creating new beads
+
+See `AGENTS.md` for full agent workflow instructions.
 
 ## File Locations
 
