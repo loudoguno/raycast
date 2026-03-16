@@ -1,0 +1,82 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "roam-research-custom",
+  "title": "RoamResearch",
+  "description": "Zero-friction search and preview for your Roam Research knowledge graphs",
+  "icon": "extension-icon.png",
+  "author": "loudog",
+  "categories": ["Productivity"],
+  "license": "MIT",
+  "preferences": [
+    {
+      "name": "primaryGraph",
+      "type": "textfield",
+      "required": false,
+      "title": "Primary Graph",
+      "description": "Your default graph name — skip the graph picker on search"
+    },
+    {
+      "name": "openIn",
+      "type": "dropdown",
+      "required": false,
+      "title": "Open Pages In",
+      "description": "Where to open Roam pages",
+      "default": "web",
+      "data": [
+        { "title": "Browser", "value": "web" },
+        { "title": "Roam Desktop App", "value": "app" }
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "name": "search",
+      "title": "Search Roam",
+      "subtitle": "RoamResearch",
+      "description": "Instantly search your Roam graph with rich block previews",
+      "mode": "view"
+    },
+    {
+      "name": "quick-capture",
+      "title": "Quick Capture",
+      "subtitle": "RoamResearch",
+      "description": "Quickly append a note to your daily page or any page",
+      "mode": "view"
+    },
+    {
+      "name": "daily-note",
+      "title": "Daily Note",
+      "subtitle": "RoamResearch",
+      "description": "Open today's daily note",
+      "mode": "no-view"
+    },
+    {
+      "name": "add-graph",
+      "title": "Add Graph",
+      "subtitle": "RoamResearch",
+      "description": "Connect a Roam graph with an API token",
+      "mode": "view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.104.0",
+    "@raycast/utils": "^2.2.0",
+    "cross-fetch": "^4.0.0",
+    "dayjs": "^1.11.13"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.11",
+    "@types/node": "22.x",
+    "@types/react": "19.x",
+    "eslint": "^9.0.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.8.0"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}
