@@ -6,12 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a personal collection of custom Raycast extensions for macOS. The repository contains four distinct extensions:
+This is a personal collection of custom Raycast extensions for macOS. The repository contains five distinct extensions:
 
 1. **Balloons** - Browser-based celebration extension with HTML/CSS animations
 2. **Balloons Fancy** - Native macOS system overlay extension with 11 visual effects (balloons, fireworks, snow, etc.)
 3. **Claude Usage** - Utility to monitor Claude AI subscription usage limits via Safari automation
 4. **OmniFocus** - Custom OmniFocus integration with "Quick Add Anywhere" task creation
+5. **RoamResearch** - Zero-friction search and preview for Roam Research knowledge graphs (custom, not a fork)
 
 ## Common Development Commands
 
@@ -155,6 +156,40 @@ extension-name/
 - `whose()` clauses can throw type conversion errors — prefer JS-side filtering
 - `effectivelyDropped()` may not exist in all OmniFocus versions — wrap in try/catch
 
+#### 5. RoamResearch Extension
+- **Fresh build** inspired by the official Roam Research Store extension, not a fork
+- Uses Roam Research API via user-generated API tokens (graph owner required)
+- Vendored minimal API client (`src/lib/roam-client.ts`) — strongly typed, no `any`
+- `LocalStorage` for graph config (replaces the Store extension's broken `usePersistentState`)
+- Datalog queries for recent edits (`:edit/time` attribute, last 48h)
+- Directory naming convention: `RoamResearch` (PascalCase) indicates custom spin-off vs lowercase store extensions
+
+**Commands**:
+- `search` - Zero-friction search: skips graph picker, shows recent edits on open, search on first keystroke, rich block previews with clickable `[[links]]` and linked references
+- `quick-capture` - Append to daily note or any page
+- `daily-note` - One-keystroke open of today's daily note (no-view)
+- `add-graph` - Connect a Roam graph with API token (validates connection)
+
+**Key Architecture**:
+- `src/lib/roam-client.ts` - Minimal Roam API client (q, pull, search, createBlock, batchActions) with peer URL caching
+- `src/lib/roam-api.ts` - High-level operations (searchGraph, fetchRecentEdits, fetchBackRefs, getAllPages)
+- `src/lib/graph-config.ts` - Graph config management via Raycast `LocalStorage`
+- `src/lib/markdown.ts` - Roam → Raycast markdown rendering: `[[page links]]` as deeplinks, `((block refs))` resolution, `{{[[TODO]]}}` checkboxes, search term highlighting, nested children, linked references section
+- `src/lib/types.ts` - Shared TypeScript interfaces
+
+**Search UX Design**:
+- No graph selection step — defaults to Primary Graph preference
+- Empty state shows recently edited blocks (Datalog `:edit/time` query, last 48h)
+- No 2-character minimum — search fires on first keystroke
+- Rich Detail preview: page title + child blocks (3 levels) + linked references with clickable deeplinks
+- Full action panel: Open in Browser/App, Copy block ref/content/URL/UID, View back-references, Paste block ref
+
+**Known Limitations**:
+- Encrypted Roam graphs not supported (Roam backend limitation)
+- Roam API rate limits undocumented — uses exponential backoff
+- Graph owner must generate API tokens (collaborators cannot)
+- ESLint 9 + `@raycast/eslint-config` has upstream `@rushstack/eslint-patch` compatibility issue (lint errors are dev-only, don't affect build)
+
 ### Technology Stack
 
 - **TypeScript**: All extension logic
@@ -185,17 +220,28 @@ extension-name/
 2. Some older extensions have a `prepublishOnly` script to prevent accidental `npm publish` — this is optional and no longer scaffolded into new extensions
 3. Publishing via `ray publish` (or `npm run publish`) creates a PR to the official Raycast extensions repository
 
-### Forking Store Extensions
+### Customizing Store Extensions
 
-**When adding features to an existing Raycast Store extension, ALWAYS fork it rather than creating a separate extension.** Raycast has a built-in "Fork Extension" action (select the extension in Raycast → Actions → Fork Extension). This:
-- Downloads the store extension's full source code to a local directory you choose
-- Replaces the store version with your local fork
-- Gives you all existing commands plus the ability to add your own
-- Avoids naming conflicts and duplicate commands in search results
+Three approaches, depending on how much you want to change:
 
-**Preferred workflow**: Fork → move source into this repo at `extensions/{name}/` → add your commands → `npm run dev`
+**1. Fork (built-in Raycast action)** — Best when the existing extension is mostly good and you want to add commands.
+- Raycast → select extension → Actions → Fork Extension
+- Downloads full source to a local directory, **replaces** the store version
+- You inherit all commands + bugs + tech debt. No more auto-updates.
+- Workflow: Fork → move source into this repo at `extensions/{name}/` → add commands → `npm run dev`
 
-Trade-off: forked extensions don't receive store auto-updates. You own the code from that point.
+**2. Clone from GitHub** — Same as fork but manual. Copy files from `github.com/raycast/extensions/tree/main/extensions/{name}/`.
+- Can coexist with the store version (different extension name/identifier)
+- Same inherited tech debt as forking
+
+**3. Fresh start (reference only)** — Best when you want to fundamentally redesign the UX.
+- Scaffold a new extension, cherry-pick only the valuable parts (API integration, queries)
+- Clean architecture, modern deps, no bug baggage
+- More upfront work, but no fighting someone else's broken patterns
+- Use PascalCase directory name (e.g., `RoamResearch`) to distinguish from lowercase store extensions
+- Example: `extensions/RoamResearch/` was built fresh, referencing the store extension's Roam API patterns only
+
+Trade-off for all approaches: you own the code from that point — no store auto-updates.
 
 ### Safari Automation (Claude Usage)
 
@@ -218,12 +264,21 @@ The omnifocus extension requires OmniFocus Pro for scripting access:
 - **OmniFocus Pro**: Required for AppleScript/JXA automation
 - **Accessibility permissions**: System Settings > Privacy & Security > Accessibility > Raycast
 
+### Roam Research API (RoamResearch Extension)
+
+The RoamResearch extension requires a Roam Research account with API access:
+- **Graph ownership**: Must be the graph owner to generate API tokens
+- **API token**: Roam → Settings → Graph → API Tokens → + New API Token (scope: "edit")
+- **Primary Graph preference**: Set in extension preferences to skip graph picker on search
+- **Encrypted graphs**: Not supported (Roam backend limitation)
+
 ## Testing
 
 - Test extensions by opening Raycast and searching for command names
 - For balloons-fancy, test each effect individually (11 total commands)
 - For claude-usage, ensure Safari can access claude.ai and permissions are granted
 - For omnifocus, ensure OmniFocus Pro is installed and Raycast has accessibility permissions
+- For RoamResearch, ensure API token is configured via "Add Graph" command and Primary Graph is set in preferences
 
 ## Machine Setup Checks
 
