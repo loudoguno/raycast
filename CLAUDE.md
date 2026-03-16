@@ -1,3 +1,5 @@
+omnifocus_id: kkCqnBms5-P  # ~/code/raycast/extensions/omnifocus
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -209,11 +211,6 @@ The claude-usage extension requires specific Safari permissions:
 - Info.plist is modified during build to set bundle identifier
 - App must be installed to `/Applications/` for the extension to find it
 - Each effect has its own Swift view file but all are compiled into one app bundle
-
-### OmniFocus Project Tracking
-
-<!-- Used by /check-omnifocus skill to find associated OmniFocus project -->
-omnifocus_project: "Create OmniFocus Raycast Extension:"
 
 ### OmniFocus Automation (OmniFocus Extension)
 

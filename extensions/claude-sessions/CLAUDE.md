@@ -1,1 +1,1 @@
-omnifocus_project: "Claude Sessions Extension:"
+omnifocus_id: pg2nfrveQyz  # ~/code/raycast/extensions/claude-sessions
