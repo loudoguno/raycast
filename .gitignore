@@ -25,4 +25,11 @@ tmp/
 
 # Dolt database files (added by bd init)
 .dolt/
+
+# Beads transient files
+.beads/*.lock
+
+# Algorithm PRD working directory
+MEMORY/
+
 *.db
