@@ -26,7 +26,9 @@ function runGit(args: string, cwd: string): string {
 }
 
 export function getRepoStatus(repoPath: string): RepoStatus {
-  const resolvedPath = repoPath.startsWith("~") ? join(homedir(), repoPath.slice(1)) : repoPath;
+  const resolvedPath = repoPath.startsWith("~")
+    ? join(homedir(), repoPath.slice(1))
+    : repoPath;
 
   const name = resolvedPath.split("/").pop() || resolvedPath;
 
@@ -55,11 +57,16 @@ export function getRepoStatus(repoPath: string): RepoStatus {
 
     const statusOutput = runGit("status --porcelain", resolvedPath);
     const isDirty = statusOutput.length > 0;
-    const dirtyCount = isDirty ? statusOutput.split("\n").filter((l) => l.trim()).length : 0;
+    const dirtyCount = isDirty
+      ? statusOutput.split("\n").filter((l) => l.trim()).length
+      : 0;
 
     let unpushedCount = 0;
     try {
-      const unpushedOutput = runGit("rev-list @{u}..HEAD --count", resolvedPath);
+      const unpushedOutput = runGit(
+        "rev-list @{u}..HEAD --count",
+        resolvedPath,
+      );
       unpushedCount = parseInt(unpushedOutput, 10) || 0;
     } catch {
       // No upstream configured or other error - treat as 0
@@ -91,7 +98,9 @@ export function getRepoStatus(repoPath: string): RepoStatus {
 }
 
 export function scanForRepos(scanDir: string): string[] {
-  const resolvedDir = scanDir.startsWith("~") ? join(homedir(), scanDir.slice(1)) : scanDir;
+  const resolvedDir = scanDir.startsWith("~")
+    ? join(homedir(), scanDir.slice(1))
+    : scanDir;
 
   if (!existsSync(resolvedDir)) return [];
 
@@ -120,7 +129,10 @@ export function getWatchedRepos(): string[] {
   const explicit = [join(home, "code", "raycast"), join(home, "keybindings")];
 
   const scanned = scanForRepos(join(home, "code")).filter(
-    (p) => !explicit.includes(p) && p !== join(home, "code", "raycast") && p !== join(home, "keybindings"),
+    (p) =>
+      !explicit.includes(p) &&
+      p !== join(home, "code", "raycast") &&
+      p !== join(home, "keybindings"),
   );
 
   return [...explicit, ...scanned];
@@ -156,9 +168,10 @@ export function sortRepos(repos: RepoStatus[]): RepoStatus[] {
     if (!a.error && b.error) return -1;
 
     // Dirty/unpushed first
-    const aNeedsAttention = (a.isDirty || a.unpushedCount > 0) ? 1 : 0;
-    const bNeedsAttention = (b.isDirty || b.unpushedCount > 0) ? 1 : 0;
-    if (aNeedsAttention !== bNeedsAttention) return bNeedsAttention - aNeedsAttention;
+    const aNeedsAttention = a.isDirty || a.unpushedCount > 0 ? 1 : 0;
+    const bNeedsAttention = b.isDirty || b.unpushedCount > 0 ? 1 : 0;
+    if (aNeedsAttention !== bNeedsAttention)
+      return bNeedsAttention - aNeedsAttention;
 
     // Then by last commit date (most recent first)
     return b.lastCommitDate.getTime() - a.lastCommitDate.getTime();

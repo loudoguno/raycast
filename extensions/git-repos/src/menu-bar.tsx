@@ -1,8 +1,23 @@
-import { MenuBarExtra, openCommandPreferences, Clipboard, showHUD, open } from "@raycast/api";
-import { getWatchedRepos, getRepoStatus, sortRepos, statusIcon, RepoStatus } from "./utils/git";
+import {
+  MenuBarExtra,
+  openCommandPreferences,
+  Clipboard,
+  showHUD,
+  open,
+} from "@raycast/api";
+import { execSync } from "child_process";
+import {
+  getWatchedRepos,
+  getRepoStatus,
+  sortRepos,
+  statusIcon,
+  RepoStatus,
+} from "./utils/git";
 
 function getMenuBarTitle(repos: RepoStatus[]): string {
-  const attentionCount = repos.filter((r) => !r.error && (r.isDirty || r.unpushedCount > 0)).length;
+  const attentionCount = repos.filter(
+    (r) => !r.error && (r.isDirty || r.unpushedCount > 0),
+  ).length;
   if (attentionCount === 0) return "⑃";
   return `⑃ ${attentionCount}`;
 }
@@ -35,7 +50,6 @@ export default function Command() {
               onAction={async () => {
                 open(`terminal://`);
                 await showHUD(`Opening ${repo.name} in Terminal`);
-                const { execSync } = require("child_process");
                 execSync(
                   `osascript -e 'tell application "Terminal" to do script "cd \\"${repo.path}\\""'`,
                 );
@@ -52,7 +66,10 @@ export default function Command() {
         );
       })}
       <MenuBarExtra.Separator />
-      <MenuBarExtra.Item title="Preferences..." onAction={openCommandPreferences} />
+      <MenuBarExtra.Item
+        title="Preferences..."
+        onAction={openCommandPreferences}
+      />
     </MenuBarExtra>
   );
 }

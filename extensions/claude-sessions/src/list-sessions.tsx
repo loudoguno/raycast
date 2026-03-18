@@ -626,7 +626,7 @@ export default function ListSessions() {
                       shortcut={{ modifiers: ["cmd"], key: "c" }}
                     />
                     <Action.CopyToClipboard
-                      title="Copy PID"
+                      title="Copy Pid"
                       content={String(session.pid)}
                       shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
                     />

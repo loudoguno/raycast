@@ -1,4 +1,12 @@
-import { List, ActionPanel, Action, showToast, Toast, Icon, Color } from "@raycast/api";
+import {
+  List,
+  ActionPanel,
+  Action,
+  showToast,
+  Toast,
+  Icon,
+  Color,
+} from "@raycast/api";
 import { useEffect, useState } from "react";
 import * as fs from "fs";
 import * as path from "path";
@@ -29,9 +37,16 @@ interface HandoffItem {
   content: string;
 }
 
-function parseSessionFilename(filename: string): { date: string; time: string; machine: string; isActive: boolean } {
+function parseSessionFilename(filename: string): {
+  date: string;
+  time: string;
+  machine: string;
+  isActive: boolean;
+} {
   // Pattern: 2026-01-31-1456__mx3-active-claude-session.md or 2026-01-31-2013__mx3-session.md
-  const match = filename.match(/^(\d{4}-\d{2}-\d{2})-(\d{4})__([^-]+)(-active-claude-session|-session)\.md$/);
+  const match = filename.match(
+    /^(\d{4}-\d{2}-\d{2})-(\d{4})__([^-]+)(-active-claude-session|-session)\.md$/,
+  );
   if (match) {
     const [, date, rawTime, machine, suffix] = match;
     const hours = rawTime.slice(0, 2);
@@ -47,7 +62,12 @@ function getFirstMeaningfulLine(content: string): string {
   const lines = content.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith("#") && !trimmed.startsWith("---") && !trimmed.startsWith("**Machine:**")) {
+    if (
+      trimmed &&
+      !trimmed.startsWith("#") &&
+      !trimmed.startsWith("---") &&
+      !trimmed.startsWith("**Machine:**")
+    ) {
       // Truncate long lines
       return trimmed.length > 80 ? trimmed.slice(0, 77) + "..." : trimmed;
     }
@@ -84,7 +104,11 @@ function loadSessions(): SessionItem[] {
     try {
       files = fs
         .readdirSync(datePath)
-        .filter((f) => f.endsWith("-session.md") || f.endsWith("-active-claude-session.md"))
+        .filter(
+          (f) =>
+            f.endsWith("-session.md") ||
+            f.endsWith("-active-claude-session.md"),
+        )
         .sort()
         .reverse();
     } catch {
@@ -194,9 +218,17 @@ function SessionActions({ session }: { session: SessionItem }) {
         />
       )}
       {session.projectPath && (
-        <Action.CopyToClipboard title="Copy Project Path" content={session.projectPath} icon={Icon.Clipboard} />
+        <Action.CopyToClipboard
+          title="Copy Project Path"
+          content={session.projectPath}
+          icon={Icon.Clipboard}
+        />
       )}
-      <Action.CopyToClipboard title="Copy Session Path" content={session.filepath} icon={Icon.Clipboard} />
+      <Action.CopyToClipboard
+        title="Copy Session Path"
+        content={session.filepath}
+        icon={Icon.Clipboard}
+      />
     </ActionPanel>
   );
 }
@@ -204,9 +236,22 @@ function SessionActions({ session }: { session: SessionItem }) {
 function HandoffActions({ handoff }: { handoff: HandoffItem }) {
   return (
     <ActionPanel>
-      <Action.Open title="Open Project in Terminal" target={handoff.projectPath} application="Terminal" icon={Icon.Terminal} />
-      <Action.Open title="Open HANDOFF.md" target={handoff.handoffPath} icon={Icon.Document} />
-      <Action.CopyToClipboard title="Copy Project Path" content={handoff.projectPath} icon={Icon.Clipboard} />
+      <Action.Open
+        title="Open Project in Terminal"
+        target={handoff.projectPath}
+        application="Terminal"
+        icon={Icon.Terminal}
+      />
+      <Action.Open
+        title="Open Handoff.md"
+        target={handoff.handoffPath}
+        icon={Icon.Document}
+      />
+      <Action.CopyToClipboard
+        title="Copy Project Path"
+        content={handoff.projectPath}
+        icon={Icon.Clipboard}
+      />
     </ActionPanel>
   );
 }
@@ -215,7 +260,7 @@ export default function SessionLauncher() {
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [handoffs, setHandoffs] = useState<HandoffItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedHandoff, setSelectedHandoff] = useState<HandoffItem | null>(null);
+  const [, setSelectedHandoff] = useState<HandoffItem | null>(null);
 
   useEffect(() => {
     try {
@@ -234,12 +279,6 @@ export default function SessionLauncher() {
     }
   }, []);
 
-  const handoffDetail = selectedHandoff ? (
-    <List.Item.Detail
-      markdown={selectedHandoff.content}
-    />
-  ) : undefined;
-
   return (
     <List
       isLoading={isLoading}
@@ -247,18 +286,17 @@ export default function SessionLauncher() {
       searchBarPlaceholder="Search sessions and handoffs..."
     >
       {handoffs.length > 0 && (
-        <List.Section title="Project Handoffs" subtitle={`${handoffs.length} projects`}>
+        <List.Section
+          title="Project Handoffs"
+          subtitle={`${handoffs.length} projects`}
+        >
           {handoffs.map((handoff) => (
             <List.Item
               key={handoff.id}
               title={handoff.projectName}
               subtitle={handoff.subtitle}
               icon={{ source: Icon.Folder, tintColor: Color.Blue }}
-              detail={
-                <List.Item.Detail
-                  markdown={handoff.content}
-                />
-              }
+              detail={<List.Item.Detail markdown={handoff.content} />}
               actions={<HandoffActions handoff={handoff} />}
               onAction={() => setSelectedHandoff(handoff)}
             />
@@ -267,10 +305,16 @@ export default function SessionLauncher() {
       )}
 
       {sessions.length > 0 && (
-        <List.Section title="Recent Sessions" subtitle={`${sessions.length} sessions`}>
+        <List.Section
+          title="Recent Sessions"
+          subtitle={`${sessions.length} sessions`}
+        >
           {sessions.map((session) => {
             const accessory = session.isActive
-              ? { icon: { source: Icon.Circle, tintColor: Color.Green }, tooltip: "Active session" }
+              ? {
+                  icon: { source: Icon.Circle, tintColor: Color.Green },
+                  tooltip: "Active session",
+                }
               : { text: session.machine, tooltip: "Machine" };
 
             return (
@@ -279,7 +323,12 @@ export default function SessionLauncher() {
                 title={`${session.date} ${session.time}`}
                 subtitle={session.subtitle}
                 accessories={[accessory]}
-                icon={{ source: Icon.Clock, tintColor: session.isActive ? Color.Green : Color.SecondaryText }}
+                icon={{
+                  source: Icon.Clock,
+                  tintColor: session.isActive
+                    ? Color.Green
+                    : Color.SecondaryText,
+                }}
                 detail={undefined}
                 actions={<SessionActions session={session} />}
               />

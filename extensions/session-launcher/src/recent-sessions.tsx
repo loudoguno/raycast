@@ -1,4 +1,12 @@
-import { List, ActionPanel, Action, showToast, Toast, Icon, Color } from "@raycast/api";
+import {
+  List,
+  ActionPanel,
+  Action,
+  showToast,
+  Toast,
+  Icon,
+  Color,
+} from "@raycast/api";
 import { useEffect, useState } from "react";
 import * as fs from "fs";
 import * as path from "path";
@@ -19,8 +27,15 @@ interface SessionItem {
   isActive: boolean;
 }
 
-function parseSessionFilename(filename: string): { date: string; time: string; machine: string; isActive: boolean } {
-  const match = filename.match(/^(\d{4}-\d{2}-\d{2})-(\d{4})__([^-]+)(-active-claude-session|-session)\.md$/);
+function parseSessionFilename(filename: string): {
+  date: string;
+  time: string;
+  machine: string;
+  isActive: boolean;
+} {
+  const match = filename.match(
+    /^(\d{4}-\d{2}-\d{2})-(\d{4})__([^-]+)(-active-claude-session|-session)\.md$/,
+  );
   if (match) {
     const [, date, rawTime, machine, suffix] = match;
     const hours = rawTime.slice(0, 2);
@@ -61,7 +76,11 @@ function loadSessions(): SessionItem[] {
     try {
       files = fs
         .readdirSync(datePath)
-        .filter((f) => f.endsWith("-session.md") || f.endsWith("-active-claude-session.md"))
+        .filter(
+          (f) =>
+            f.endsWith("-session.md") ||
+            f.endsWith("-active-claude-session.md"),
+        )
         .sort()
         .reverse();
     } catch {
@@ -119,12 +138,15 @@ export default function RecentSessions() {
   }, []);
 
   // Group sessions by date for section headers
-  const sessionsByDate = sessions.reduce<Record<string, SessionItem[]>>((acc, session) => {
-    const key = session.date || "Unknown Date";
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(session);
-    return acc;
-  }, {});
+  const sessionsByDate = sessions.reduce<Record<string, SessionItem[]>>(
+    (acc, session) => {
+      const key = session.date || "Unknown Date";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(session);
+      return acc;
+    },
+    {},
+  );
 
   const dates = Object.keys(sessionsByDate).sort().reverse();
 
@@ -135,7 +157,11 @@ export default function RecentSessions() {
       searchBarPlaceholder="Search recent sessions..."
     >
       {dates.map((date) => (
-        <List.Section key={date} title={date} subtitle={`${sessionsByDate[date].length} sessions`}>
+        <List.Section
+          key={date}
+          title={date}
+          subtitle={`${sessionsByDate[date].length} sessions`}
+        >
           {sessionsByDate[date].map((session) => {
             const titleParts = [`${session.time}`];
             if (session.machine) titleParts.push(`[${session.machine}]`);
@@ -157,16 +183,30 @@ export default function RecentSessions() {
               <List.Item
                 key={session.id}
                 title={title}
-                icon={{ source: Icon.Clock, tintColor: session.isActive ? Color.Green : Color.SecondaryText }}
+                icon={{
+                  source: Icon.Clock,
+                  tintColor: session.isActive
+                    ? Color.Green
+                    : Color.SecondaryText,
+                }}
                 accessories={accessories}
                 detail={
                   <List.Item.Detail
                     markdown={session.content}
                     metadata={
                       <List.Item.Detail.Metadata>
-                        <List.Item.Detail.Metadata.Label title="Date" text={session.date} />
-                        <List.Item.Detail.Metadata.Label title="Time" text={session.time} />
-                        <List.Item.Detail.Metadata.Label title="Machine" text={session.machine} />
+                        <List.Item.Detail.Metadata.Label
+                          title="Date"
+                          text={session.date}
+                        />
+                        <List.Item.Detail.Metadata.Label
+                          title="Time"
+                          text={session.time}
+                        />
+                        <List.Item.Detail.Metadata.Label
+                          title="Machine"
+                          text={session.machine}
+                        />
                         {session.projectPath && (
                           <List.Item.Detail.Metadata.Label
                             title="Project"
@@ -179,7 +219,10 @@ export default function RecentSessions() {
                           icon={
                             session.isActive
                               ? { source: Icon.Circle, tintColor: Color.Green }
-                              : { source: Icon.CheckCircle, tintColor: Color.SecondaryText }
+                              : {
+                                  source: Icon.CheckCircle,
+                                  tintColor: Color.SecondaryText,
+                                }
                           }
                         />
                       </List.Item.Detail.Metadata>
@@ -188,7 +231,10 @@ export default function RecentSessions() {
                 }
                 actions={
                   <ActionPanel>
-                    <Action.Open title="Open Session Log" target={session.filepath} />
+                    <Action.Open
+                      title="Open Session Log"
+                      target={session.filepath}
+                    />
                     {session.projectPath && (
                       <Action.Open
                         title="Open Project in Terminal"
@@ -204,7 +250,11 @@ export default function RecentSessions() {
                         icon={Icon.Clipboard}
                       />
                     )}
-                    <Action.CopyToClipboard title="Copy Session Path" content={session.filepath} icon={Icon.Clipboard} />
+                    <Action.CopyToClipboard
+                      title="Copy Session Path"
+                      content={session.filepath}
+                      icon={Icon.Clipboard}
+                    />
                   </ActionPanel>
                 }
               />

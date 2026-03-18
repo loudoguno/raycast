@@ -11,9 +11,18 @@ import {
   Color,
 } from "@raycast/api";
 import { execSync } from "child_process";
-import { getWatchedRepos, getRepoStatus, sortRepos, statusIcon, formatRelativeDate, RepoStatus } from "./utils/git";
+import {
+  getWatchedRepos,
+  getRepoStatus,
+  sortRepos,
+  formatRelativeDate,
+  RepoStatus,
+} from "./utils/git";
 
-function runGitCommand(cmd: string, repoPath: string): { success: boolean; output: string } {
+function runGitCommand(
+  cmd: string,
+  repoPath: string,
+): { success: boolean; output: string } {
   try {
     const output = execSync(`git ${cmd}`, {
       cwd: repoPath,
@@ -40,7 +49,9 @@ function getFullStatus(repo: RepoStatus): string {
   const lines: string[] = [];
 
   lines.push(`Branch: ${repo.branch}`);
-  lines.push(`Last commit: ${repo.lastCommitMsg} (${formatRelativeDate(repo.lastCommitDate)})`);
+  lines.push(
+    `Last commit: ${repo.lastCommitMsg} (${formatRelativeDate(repo.lastCommitDate)})`,
+  );
   lines.push("");
 
   const { output: statusOutput } = runGitCommand("status --short", repo.path);
@@ -69,7 +80,13 @@ function getFullStatus(repo: RepoStatus): string {
   return lines.join("\n");
 }
 
-function RepoDetail({ repo, onRefresh }: { repo: RepoStatus; onRefresh: () => void }) {
+function RepoDetail({
+  repo,
+  onRefresh,
+}: {
+  repo: RepoStatus;
+  onRefresh: () => void;
+}) {
   const markdown = getFullStatus(repo);
 
   return (
@@ -88,7 +105,10 @@ function RepoDetail({ repo, onRefresh }: { repo: RepoStatus; onRefresh: () => vo
             title="Git Pull"
             icon={Icon.ArrowDown}
             onAction={async () => {
-              const toast = await showToast({ style: Toast.Style.Animated, title: "Pulling..." });
+              const toast = await showToast({
+                style: Toast.Style.Animated,
+                title: "Pulling...",
+              });
               const result = runGitCommand("pull", repo.path);
               if (result.success) {
                 toast.style = Toast.Style.Success;
@@ -106,7 +126,10 @@ function RepoDetail({ repo, onRefresh }: { repo: RepoStatus; onRefresh: () => vo
             title="Git Push"
             icon={Icon.ArrowUp}
             onAction={async () => {
-              const toast = await showToast({ style: Toast.Style.Animated, title: "Pushing..." });
+              const toast = await showToast({
+                style: Toast.Style.Animated,
+                title: "Pushing...",
+              });
               const result = runGitCommand("push", repo.path);
               if (result.success) {
                 toast.style = Toast.Style.Success;
@@ -129,8 +152,10 @@ function RepoDetail({ repo, onRefresh }: { repo: RepoStatus; onRefresh: () => vo
 
 function getListIcon(repo: RepoStatus): { source: string; tintColor?: Color } {
   if (repo.error) return { source: Icon.ExclamationMark, tintColor: Color.Red };
-  if (repo.isDirty && repo.unpushedCount > 0) return { source: Icon.ArrowUp, tintColor: Color.Orange };
-  if (repo.unpushedCount > 0) return { source: Icon.ArrowUp, tintColor: Color.Yellow };
+  if (repo.isDirty && repo.unpushedCount > 0)
+    return { source: Icon.ArrowUp, tintColor: Color.Orange };
+  if (repo.unpushedCount > 0)
+    return { source: Icon.ArrowUp, tintColor: Color.Yellow };
   if (repo.isDirty) return { source: Icon.Dot, tintColor: Color.Orange };
   return { source: Icon.Checkmark, tintColor: Color.Green };
 }
@@ -142,26 +167,43 @@ function getAccessories(repo: RepoStatus): List.Item.Accessory[] {
 
   accessories.push({ text: repo.branch, icon: Icon.CodeBlock });
 
-  if (repo.isDirty) accessories.push({ text: `${repo.dirtyCount} changed`, icon: Icon.Dot });
-  if (repo.unpushedCount > 0) accessories.push({ text: `${repo.unpushedCount} unpushed`, icon: Icon.ArrowUp });
-  if (repo.isStale) accessories.push({ text: "stale", icon: Icon.Clock, tooltip: "Last commit > 7 days ago" });
+  if (repo.isDirty)
+    accessories.push({ text: `${repo.dirtyCount} changed`, icon: Icon.Dot });
+  if (repo.unpushedCount > 0)
+    accessories.push({
+      text: `${repo.unpushedCount} unpushed`,
+      icon: Icon.ArrowUp,
+    });
+  if (repo.isStale)
+    accessories.push({
+      text: "stale",
+      icon: Icon.Clock,
+      tooltip: "Last commit > 7 days ago",
+    });
 
-  accessories.push({ text: formatRelativeDate(repo.lastCommitDate), tooltip: repo.lastCommitDate.toLocaleString() });
+  accessories.push({
+    text: formatRelativeDate(repo.lastCommitDate),
+    tooltip: repo.lastCommitDate.toLocaleString(),
+  });
 
   return accessories;
 }
 
 export default function Command() {
   const { push } = useNavigation();
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [, setRefreshKey] = useState(0);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   const repoPaths = getWatchedRepos();
   const allRepos = sortRepos(repoPaths.map(getRepoStatus));
 
-  const needsAttention = allRepos.filter((r) => !r.error && (r.isDirty || r.unpushedCount > 0));
-  const clean = allRepos.filter((r) => !r.error && !r.isDirty && r.unpushedCount === 0);
+  const needsAttention = allRepos.filter(
+    (r) => !r.error && (r.isDirty || r.unpushedCount > 0),
+  );
+  const clean = allRepos.filter(
+    (r) => !r.error && !r.isDirty && r.unpushedCount === 0,
+  );
   const errored = allRepos.filter((r) => !!r.error);
 
   function renderRepo(repo: RepoStatus) {
@@ -181,7 +223,9 @@ export default function Command() {
             <Action
               title="View Details"
               icon={Icon.Eye}
-              onAction={() => push(<RepoDetail repo={repo} onRefresh={refresh} />)}
+              onAction={() =>
+                push(<RepoDetail repo={repo} onRefresh={refresh} />)
+              }
             />
             <Action
               title="Open in Terminal"
@@ -193,7 +237,10 @@ export default function Command() {
               icon={Icon.ArrowDown}
               shortcut={{ modifiers: ["cmd"], key: "p" }}
               onAction={async () => {
-                const toast = await showToast({ style: Toast.Style.Animated, title: "Pulling..." });
+                const toast = await showToast({
+                  style: Toast.Style.Animated,
+                  title: "Pulling...",
+                });
                 const result = runGitCommand("pull", repo.path);
                 if (result.success) {
                   toast.style = Toast.Style.Success;
@@ -212,7 +259,10 @@ export default function Command() {
               icon={Icon.ArrowUp}
               shortcut={{ modifiers: ["cmd", "shift"], key: "p" }}
               onAction={async () => {
-                const toast = await showToast({ style: Toast.Style.Animated, title: "Pushing..." });
+                const toast = await showToast({
+                  style: Toast.Style.Animated,
+                  title: "Pushing...",
+                });
                 const result = runGitCommand("push", repo.path);
                 if (result.success) {
                   toast.style = Toast.Style.Success;
@@ -245,7 +295,10 @@ export default function Command() {
   return (
     <List isLoading={false}>
       {needsAttention.length > 0 && (
-        <List.Section title="Needs Attention" subtitle={`${needsAttention.length} repos`}>
+        <List.Section
+          title="Needs Attention"
+          subtitle={`${needsAttention.length} repos`}
+        >
           {needsAttention.map(renderRepo)}
         </List.Section>
       )}
