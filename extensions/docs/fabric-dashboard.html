@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fabric System Dashboard</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2333;
+    --surface3: #21283b;
+    --border: #30363d;
+    --border-accent: #58a6ff;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --text-muted: #6e7681;
+    --accent: #58a6ff;
+    --accent2: #a371f7;
+    --accent3: #3fb950;
+    --accent4: #f0883e;
+    --accent5: #f778ba;
+    --accent6: #79c0ff;
+    --danger: #f85149;
+    --warning: #d29922;
+    --success: #3fb950;
+    --gradient1: linear-gradient(135deg, #58a6ff 0%, #a371f7 100%);
+    --gradient2: linear-gradient(135deg, #3fb950 0%, #58a6ff 100%);
+    --gradient3: linear-gradient(135deg, #f0883e 0%, #f778ba 100%);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(16px);
+  }
+  .header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-logo {
+    font-size: 32px;
+    line-height: 1;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    background: var(--gradient1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  .header h1 span {
+    font-weight: 400;
+    opacity: 0.7;
+  }
+  .header-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    white-space: nowrap;
+  }
+  .badge.green { border-color: var(--success); color: var(--success); }
+  .badge.blue { border-color: var(--accent); color: var(--accent); }
+  .badge.purple { border-color: var(--accent2); color: var(--accent2); }
+  .badge.orange { border-color: var(--accent4); color: var(--accent4); }
+
+  /* ── Layout ── */
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 32px;
+  }
+
+  /* ── Section Nav ── */
+  .section-nav {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+  }
+  .section-nav button {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .section-nav button:hover { background: var(--surface2); color: var(--text); }
+  .section-nav button.active { background: var(--accent); color: #fff; }
+
+  /* ── Sections ── */
+  .section { display: none; animation: fadeIn 0.3s ease; }
+  .section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* ── Stat Cards ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .stat-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .stat-card .stat-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .stat-card .stat-value {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1.2;
+  }
+  .stat-card .stat-detail {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .stat-card .stat-icon {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 24px;
+    opacity: 0.3;
+  }
+  .stat-card.accent1 .stat-value { color: var(--accent); }
+  .stat-card.accent2 .stat-value { color: var(--accent2); }
+  .stat-card.accent3 .stat-value { color: var(--accent3); }
+  .stat-card.accent4 .stat-value { color: var(--accent4); }
+  .stat-card.accent5 .stat-value { color: var(--accent5); }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--border-accent); }
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Grid layouts ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  /* ── Pro Tips ── */
+  .protip {
+    background: linear-gradient(135deg, rgba(63,185,80,0.08), rgba(88,166,255,0.08));
+    border: 1px solid rgba(63,185,80,0.25);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    display: flex;
+    gap: 10px;
+  }
+  .protip::before { content: "💡"; flex-shrink: 0; }
+  .protip strong { color: var(--success); }
+
+  /* ── Tooltips ── */
+  [data-tooltip] {
+    position: relative;
+    cursor: help;
+    border-bottom: 1px dotted var(--text-dim);
+  }
+  [data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    max-width: 320px;
+    white-space: normal;
+    z-index: 200;
+    box-shadow: var(--shadow);
+    pointer-events: none;
+    line-height: 1.4;
+  }
+
+  /* ── Collapsible ── */
+  .collapsible {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .collapsible-header {
+    padding: 12px 16px;
+    background: var(--surface2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 600;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .collapsible-header:hover { background: var(--surface3); }
+  .collapsible-header .arrow {
+    transition: transform 0.3s;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .collapsible.open .collapsible-header .arrow { transform: rotate(90deg); }
+  .collapsible-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    background: var(--surface);
+  }
+  .collapsible.open .collapsible-body { max-height: 2000px; }
+  .collapsible-content { padding: 16px; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    font-weight: 700;
+    color: var(--text-dim);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--surface2);
+    position: sticky;
+    top: 0;
+  }
+  tr:hover td { background: var(--surface2); }
+  td code {
+    background: var(--surface3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--accent6);
+  }
+
+  /* ── Search ── */
+  .search-box {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 12px 16px 12px 42px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box input::placeholder { color: var(--text-muted); }
+  .search-box .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 16px;
+  }
+  .search-count {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ── Pattern Grid ── */
+  .pattern-filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .filter-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .filter-btn .count {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    margin-left: 4px;
+  }
+
+  .pattern-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 10px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  .pattern-list::-webkit-scrollbar { width: 6px; }
+  .pattern-list::-webkit-scrollbar-track { background: transparent; }
+  .pattern-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .pattern-item {
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .pattern-item:hover { border-color: var(--accent); background: var(--surface2); transform: translateX(2px); }
+  .pattern-item .p-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .pattern-item .p-name {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'SF Mono', monospace;
+    color: var(--accent6);
+  }
+  .pattern-item .p-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .cat-analyze .p-icon { background: rgba(248,81,73,0.15); }
+  .cat-create .p-icon { background: rgba(88,166,255,0.15); }
+  .cat-extract .p-icon { background: rgba(163,113,247,0.15); }
+  .cat-summarize .p-icon { background: rgba(63,185,80,0.15); }
+  .cat-explain .p-icon { background: rgba(210,153,34,0.15); }
+  .cat-improve .p-icon { background: rgba(240,136,62,0.15); }
+  .cat-write .p-icon { background: rgba(247,120,186,0.15); }
+  .cat-telos .p-icon { background: rgba(121,192,255,0.15); }
+  .cat-other .p-icon { background: rgba(139,148,158,0.15); }
+
+  /* ── Code blocks ── */
+  .code-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    overflow-x: auto;
+    position: relative;
+    margin: 8px 0;
+    color: var(--text);
+  }
+  .code-block .comment { color: var(--text-muted); }
+  .code-block .cmd { color: var(--accent3); }
+  .code-block .flag { color: var(--accent4); }
+  .code-block .str { color: var(--accent6); }
+  .code-block .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .code-block:hover .copy-btn { opacity: 1; }
+  .code-block .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ── Diagram ── */
+  .arch-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    overflow-x: auto;
+  }
+  .arch-diagram pre {
+    font-family: 'SF Mono', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-dim);
+    display: inline-block;
+    text-align: left;
+  }
+  .arch-diagram .hl { color: var(--accent); font-weight: 700; }
+  .arch-diagram .hl2 { color: var(--accent2); font-weight: 700; }
+  .arch-diagram .hl3 { color: var(--accent3); font-weight: 700; }
+  .arch-diagram .hl4 { color: var(--accent4); font-weight: 700; }
+
+  /* ── Comparison table ── */
+  .compare-table td:first-child {
+    font-weight: 600;
+    color: var(--text-dim);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    width: 160px;
+  }
+  .compare-table .official { color: var(--accent); }
+  .compare-table .local { color: var(--accent3); }
+  .compare-table .match { color: var(--success); }
+  .compare-table .diff { color: var(--warning); }
+
+  /* ── Strategy cards ── */
+  .strategy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+  .strategy-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    transition: all 0.2s;
+    cursor: default;
+  }
+  .strategy-card:hover { border-color: var(--accent2); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+  .strategy-card .s-name {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .strategy-card .s-abbr {
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    background: rgba(163,113,247,0.15);
+    color: var(--accent2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .strategy-card .s-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+  .strategy-card .s-usage {
+    margin-top: 8px;
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    color: var(--accent6);
+    background: var(--surface2);
+    padding: 6px 10px;
+    border-radius: 4px;
+  }
+
+  /* ── Links ── */
+  a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
+  a:hover { color: var(--accent6); text-decoration: underline; }
+
+  /* ── Pattern detail modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 500;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s;
+  }
+  .modal-overlay.show { display: flex; align-items: center; justify-content: center; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 90%;
+    max-width: 640px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow);
+  }
+  .modal-close {
+    float: right;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    font-family: 'SF Mono', monospace;
+    color: var(--accent6);
+  }
+  .modal .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 6px;
+    margin-bottom: 12px;
+  }
+  .modal pre {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-family: 'SF Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 12px 0;
+    white-space: pre-wrap;
+    color: var(--text-dim);
+  }
+
+  /* ── Flow diagram ── */
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+  }
+  .flow-step .step-num {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .flow-step .step-arrow {
+    color: var(--text-muted);
+    margin-left: -4px;
+    margin-right: -4px;
+  }
+  .flow-connector {
+    width: 2px;
+    height: 16px;
+    background: var(--border);
+    margin-left: 15px;
+  }
+
+  /* ── Misc ── */
+  .tag-inline {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'SF Mono', monospace;
+  }
+  .tag-green { background: rgba(63,185,80,0.15); color: var(--success); }
+  .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .tag-purple { background: rgba(163,113,247,0.15); color: var(--accent2); }
+  .tag-orange { background: rgba(240,136,62,0.15); color: var(--accent4); }
+  .tag-pink { background: rgba(247,120,186,0.15); color: var(--accent5); }
+  .tag-red { background: rgba(248,81,73,0.15); color: var(--danger); }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  .dim { color: var(--text-dim); }
+  .muted { color: var(--text-muted); }
+  .mono { font-family: 'SF Mono', monospace; }
+  .small { font-size: 12px; }
+
+  .path-link {
+    font-family: 'SF Mono', monospace;
+    font-size: 12px;
+    color: var(--accent6);
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+    word-break: break-all;
+  }
+  .path-link:hover { background: var(--surface3); }
+
+  .scroll-table-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+  }
+  .scroll-table-wrapper::-webkit-scrollbar { width: 6px; }
+  .scroll-table-wrapper::-webkit-scrollbar-track { background: transparent; }
+  .scroll-table-wrapper::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-logo">🧵</div>
+      <div>
+        <h1>Fabric <span>System Dashboard</span></h1>
+        <div class="small muted" style="margin-top:2px">
+          Open-source framework for augmenting humans using AI
+          &middot; by <a href="https://danielmiessler.com" target="_blank">Daniel Miessler</a>
+          &middot; <a href="https://github.com/danielmiessler/fabric" target="_blank">GitHub</a>
+        </div>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge green">&#9679; CLI Installed</span>
+      <span class="badge blue">v1.4.374</span>
+      <span class="badge purple">239 Patterns</span>
+      <span class="badge orange">Anthropic OAuth</span>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════════ NAV ═══════════════════════════ -->
+<div class="section-nav" id="nav">
+  <button class="active" onclick="showSection('overview')">Overview</button>
+  <button onclick="showSection('patterns')">Pattern Browser</button>
+  <button onclick="showSection('strategies')">Strategies</button>
+  <button onclick="showSection('architecture')">Architecture</button>
+  <button onclick="showSection('cli')">CLI Reference</button>
+  <button onclick="showSection('local')">Local Install</button>
+  <button onclick="showSection('youtube')">YouTube</button>
+  <button onclick="showSection('tips')">Pro Tips</button>
+</div>
+
+<!-- ═══════════════════════════ OVERVIEW ═══════════════════════════ -->
+<div class="section active" id="sec-overview">
+
+  <div class="stats-grid">
+    <div class="stat-card accent1">
+      <div class="stat-icon">🧩</div>
+      <div class="stat-label">Patterns</div>
+      <div class="stat-value" data-tooltip="239 local vs 238 in official repo. Curated prompt templates for specific tasks.">239</div>
+      <div class="stat-detail">AI prompt templates</div>
+    </div>
+    <div class="stat-card accent2">
+      <div class="stat-icon">🧠</div>
+      <div class="stat-label">Strategies</div>
+      <div class="stat-value" data-tooltip="Meta-reasoning techniques: CoT, ToT, CoD, AoT, Reflexion, Self-Refine, Self-Consistent, LtM, Standard">9</div>
+      <div class="stat-detail">Reasoning techniques</div>
+    </div>
+    <div class="stat-card accent3">
+      <div class="stat-icon">🔌</div>
+      <div class="stat-label">Providers</div>
+      <div class="stat-value" data-tooltip="OpenAI, Anthropic, Google, Ollama, Azure, Bedrock, Vertex, LM Studio, Perplexity, Groq, DeepSeek, and more">20+</div>
+      <div class="stat-detail">AI vendor integrations</div>
+    </div>
+    <div class="stat-card accent4">
+      <div class="stat-icon">⭐</div>
+      <div class="stat-label">GitHub Stars</div>
+      <div class="stat-value">39.2k</div>
+      <div class="stat-detail">Open source / MIT license</div>
+    </div>
+    <div class="stat-card accent5">
+      <div class="stat-icon">👥</div>
+      <div class="stat-label">Contributors</div>
+      <div class="stat-value">~300</div>
+      <div class="stat-detail">Pattern authors worldwide</div>
+    </div>
+  </div>
+
+  <!-- What is Fabric -->
+  <div class="card">
+    <div class="card-title">🧵 What is Fabric?</div>
+    <p style="color:var(--text-dim); font-size:14px; margin-bottom:12px;">
+      Fabric treats AI prompts as <strong style="color:var(--accent)">composable building blocks</strong> called <em>Patterns</em>.
+      Instead of writing bespoke prompts every time, you pick a pattern and pipe content through it &mdash; just like Unix commands.
+    </p>
+    <div class="code-block">
+      <span class="comment"># Pipe anything through a pattern</span><br>
+      <span class="cmd">echo</span> <span class="str">"Your content here"</span> | <span class="cmd">fabric</span> <span class="flag">--pattern</span> extract_wisdom<br><br>
+      <span class="comment"># Chain patterns together</span><br>
+      <span class="cmd">cat</span> article.txt | <span class="cmd">fabric</span> <span class="flag">-p</span> extract_wisdom | <span class="cmd">fabric</span> <span class="flag">-p</span> summarize<br><br>
+      <span class="comment"># YouTube → AI analysis in one line</span><br>
+      <span class="cmd">fabric</span> <span class="flag">-y</span> <span class="str">"https://youtube.com/watch?v=..."</span> <span class="flag">--pattern</span> summarize <span class="flag">--stream</span>
+    </div>
+    <div class="protip">
+      <div><strong>In Claude Code</strong>, you don't need the CLI at all. Just type <code>/Fabric extract_wisdom</code> and paste your content. The skill reads the pattern file directly and applies it natively.</div>
+    </div>
+  </div>
+
+  <!-- Two execution paths -->
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🖥️ CLI Path <span class="tag-inline tag-blue">fabric</span></div>
+      <p class="small dim" style="margin-bottom:10px">Shell-native, composable with Unix pipes</p>
+      <div class="code-block" style="font-size:12px">
+        <span class="cmd">fabric</span> <span class="flag">-p</span> summarize &lt; file.txt<br>
+        <span class="cmd">fabric</span> <span class="flag">-y</span> <span class="str">"URL"</span> <span class="flag">-p</span> extract_wisdom<br>
+        <span class="cmd">fabric</span> <span class="flag">-l</span>  <span class="comment"># list patterns</span><br>
+        <span class="cmd">fabric</span> <span class="flag">-U</span>  <span class="comment"># update from GitHub</span>
+      </div>
+      <p class="small muted">Reads from: <code>~/.config/fabric/patterns/</code></p>
+    </div>
+    <div class="card">
+      <div class="card-title">🤖 Claude Code Path <span class="tag-inline tag-purple">/Fabric</span></div>
+      <p class="small dim" style="margin-bottom:10px">Native skill execution, no CLI spawning</p>
+      <div class="code-block" style="font-size:12px">
+        <span class="comment"># In Claude Code session:</span><br>
+        /Fabric extract_wisdom<br>
+        /Fabric analyze_claims<br>
+        /Fabric summarize<br>
+        <span class="comment"># Then paste or reference content</span>
+      </div>
+      <p class="small muted">Reads from: <code>~/.claude/skills/CORE/Tools/fabric/Patterns/</code></p>
+    </div>
+  </div>
+
+  <!-- Core concept -->
+  <div class="card">
+    <div class="card-title">📐 Pattern Anatomy</div>
+    <p class="small dim" style="margin-bottom:12px">Every pattern is a markdown file with three canonical sections:</p>
+    <div class="code-block" style="font-size:12px">
+<span class="comment"># IDENTITY and PURPOSE</span>
+You are an expert at [task]. You take [input] and produce [output].
+
+<span class="comment"># STEPS</span>
+- Step 1: Deeply analyze the input...
+- Step 2: Identify the key themes...
+- Step 3: Extract the most important...
+
+<span class="comment"># OUTPUT INSTRUCTIONS</span>
+- Only output Markdown.
+- Use numbered lists, not bullets.
+- Do not output warnings or notes.
+
+<span class="comment"># INPUT</span>
+INPUT:
+    </div>
+    <div class="protip">
+      <div><strong>Why system.md?</strong> Fabric places instructions in the AI's <em>system message</em> rather than user input. Testing shows this produces more reliable, consistent behavior across models.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PATTERN BROWSER ═══════════════════════════ -->
+<div class="section" id="sec-patterns">
+  <div class="section-title">🧩 Pattern Browser</div>
+
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="pattern-search" placeholder="Search 239 patterns..." oninput="filterPatterns()">
+    <span class="search-count" id="pattern-count">239 patterns</span>
+  </div>
+
+  <div class="pattern-filters" id="pattern-filters">
+    <button class="filter-btn active" onclick="filterCategory('all', this)">All <span class="count">239</span></button>
+    <button class="filter-btn" onclick="filterCategory('analyze', this)" style="border-color:rgba(248,81,73,0.4)">Analyze <span class="count">35</span></button>
+    <button class="filter-btn" onclick="filterCategory('create', this)" style="border-color:rgba(88,166,255,0.4)">Create <span class="count">70</span></button>
+    <button class="filter-btn" onclick="filterCategory('extract', this)" style="border-color:rgba(163,113,247,0.4)">Extract <span class="count">50</span></button>
+    <button class="filter-btn" onclick="filterCategory('summarize', this)" style="border-color:rgba(63,185,80,0.4)">Summarize <span class="count">15</span></button>
+    <button class="filter-btn" onclick="filterCategory('explain', this)" style="border-color:rgba(210,153,34,0.4)">Explain <span class="count">5</span></button>
+    <button class="filter-btn" onclick="filterCategory('improve', this)" style="border-color:rgba(240,136,62,0.4)">Improve <span class="count">8</span></button>
+    <button class="filter-btn" onclick="filterCategory('write', this)" style="border-color:rgba(247,120,186,0.4)">Write <span class="count">8</span></button>
+    <button class="filter-btn" onclick="filterCategory('telos', this)" style="border-color:rgba(121,192,255,0.4)">TELOS <span class="count">15</span></button>
+    <button class="filter-btn" onclick="filterCategory('other', this)" style="border-color:rgba(139,148,158,0.4)">Other <span class="count">33</span></button>
+  </div>
+
+  <div class="pattern-list" id="pattern-list">
+    <!-- Populated by JS -->
+  </div>
+
+  <div class="protip" style="margin-top:16px">
+    <div><strong>Click any pattern</strong> to see its description, output format, and example usage. Patterns with a star (★) are the most commonly used across the community.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ STRATEGIES ═══════════════════════════ -->
+<div class="section" id="sec-strategies">
+  <div class="section-title">🧠 Prompt Strategies</div>
+  <p class="dim small" style="margin-bottom:16px">
+    Strategies are <strong>meta-reasoning techniques</strong> that modify <em>how</em> a pattern thinks, without changing <em>what</em> it does.
+    Mix any strategy with any pattern: <code>fabric -p analyze_paper --strategy cot</code>
+  </p>
+
+  <div class="strategy-grid">
+    <div class="strategy-card">
+      <div class="s-name"><span class="s-abbr">CoT</span> Chain of Thought</div>
+      <div class="s-desc">Step-by-step sequential reasoning. The model "thinks out loud" through each logical step before producing output. Best for complex analysis tasks.</div>
+      <div class="s-usage">fabric -p analyze_claims --strategy cot</div>
+    </div>
+    <div class="strategy-card">
+      <div class="s-name"><span class="s-abbr">ToT</span> Tree of Thought</div>
+      <div class="s-desc">Explores multiple reasoning branches in parallel, evaluates each path, then converges on the best answer. Good for creative or ambiguous problems.</div>
+      <div class="s-usage">fabric -p summarize --strategy tot</div>
+    </div>
+    <div class="strategy-card">
+      <div class="s-name"><span class="s-abbr">CoD</span> Chain of Draft</div>
+      <div class="s-desc">Iterative densification &mdash; produces a draft, then progressively refines it to pack more information into fewer words. Great for summaries.</div>
+      <div class="s-usage">fabric -p create_summary --strategy cod</div>
+    </div>
+    <div class="strategy-card">
+      <div class="s-name"><span class="s-abbr">AoT</span> Atom of Thought</div>
+      <div class="s-desc">Decomposes the problem into atomic sub-problems, solves each independently, then synthesizes. Prevents reasoning shortcuts.</div>
+      <div class="s-usage">fabric -p analyze_paper --strategy aot</div>
+    </div>
+    <div class="strategy-card">
+      <div class="s-name"><span class="s-abbr">LtM</span> Least to Most</div>
+      <div class="s-desc">Builds understanding from simple to complex. Solves the easiest sub-problem first, using each answer as context for the next. Mimics learning progression.</div>
+      <div class="s-usage">fabric -p explain_code --strategy ltm</div>
+    </div>
+    <div class="strategy-card">
+      <div class="s-name"><span class="s-abbr">REF</span> Reflexion</div>
+      <div class="s-desc">Answer &rarr; Critique &rarr; Refine cycle. The model produces an answer, then critically evaluates it, then improves. Self-correcting reasoning.</div>
+      <div class="s-usage">fabric -p improve_writing --strategy reflexion</div>
+    </div>
+    <div class="strategy-card">
+      <div class="s-name"><span class="s-abbr">SC</span> Self-Consistent</div>
+      <div class="s-desc">Generates multiple independent reasoning paths, then selects the answer that appears most consistently across paths. Reduces hallucination risk.</div>
+      <div class="s-usage">fabric -p analyze_claims --strategy self-consistent</div>
+    </div>
+    <div class="strategy-card">
+      <div class="s-name"><span class="s-abbr">SR</span> Self-Refine</div>
+      <div class="s-desc">Initial answer &rarr; Self-critique &rarr; Optional refinement. Similar to Reflexion but lighter weight. Good for writing and formatting tasks.</div>
+      <div class="s-usage">fabric -p improve_writing --strategy self-refine</div>
+    </div>
+    <div class="strategy-card">
+      <div class="s-name"><span class="s-abbr">STD</span> Standard</div>
+      <div class="s-desc">Default prompting behavior &mdash; no additional reasoning scaffolding. Direct answer. Use when the pattern itself is already well-structured.</div>
+      <div class="s-usage">fabric -p summarize --strategy standard</div>
+    </div>
+  </div>
+
+  <div class="protip">
+    <div><strong>Strategies are independent of patterns.</strong> You can pair <em>any</em> strategy with <em>any</em> pattern. This separation of concerns means 239 patterns &times; 9 strategies = 2,151 possible combinations without writing a single new prompt.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ ARCHITECTURE ═══════════════════════════ -->
+<div class="section" id="sec-architecture">
+  <div class="section-title">🏗️ Architecture</div>
+
+  <div class="arch-diagram">
+    <pre>
+                           ┌─────────────────────────────────────┐
+                           │         <span class="hl">USER INPUT</span>                  │
+                           │   text, files, URLs, YouTube, stdin │
+                           └──────────────┬──────────────────────┘
+                                          │
+                           ┌──────────────▼──────────────────────┐
+                           │         <span class="hl2">FABRIC CLI</span>                  │
+                           │    Parser, Router, Plugin System    │
+                           │    go binary: fabric-ai             │
+                           └──┬──────────┬──────────┬────────────┘
+                              │          │          │
+                    ┌─────────▼──┐  ┌────▼─────┐  ┌▼───────────┐
+                    │ <span class="hl4">PATTERNS</span>   │  │<span class="hl2">STRATEGIES</span>│  │ <span class="hl3">PROVIDERS</span> │
+                    │ 239 prompts│  │ 9 reason │  │ 20+ vendors│
+                    │ system.md  │  │ .json    │  │ plugins    │
+                    └────┬───────┘  └────┬─────┘  └──┬─────────┘
+                         │               │           │
+                         └───────┬───────┘           │
+                                 │                   │
+                    ┌────────────▼───────────────┐   │
+                    │     <span class="hl">COMPOSED PROMPT</span>         │   │
+                    │  system.md + strategy.json │   │
+                    │  + context + variables      │   │
+                    └────────────┬───────────────┘   │
+                                 │                   │
+                    ┌────────────▼───────────────────▼┐
+                    │          <span class="hl3">AI MODEL</span>               │
+                    │  Anthropic / OpenAI / Ollama... │
+                    └────────────┬────────────────────┘
+                                 │
+                    ┌────────────▼───────────────────┐
+                    │        <span class="hl4">OUTPUT</span>                  │
+                    │  stdout │ clipboard │ file     │
+                    │  → next pattern in pipe chain  │
+                    └────────────────────────────────┘
+    </pre>
+  </div>
+
+  <hr class="divider">
+
+  <!-- How patterns flow on your machine -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">📂 File Locations (Your Machine)</div>
+    <table>
+      <tr>
+        <td class="dim small" style="width:180px">CLI Patterns</td>
+        <td><span class="path-link">~/.config/fabric/patterns/</span></td>
+        <td class="small muted">238 dirs &mdash; updated via <code>fabric -U</code></td>
+      </tr>
+      <tr>
+        <td class="dim small">Skill Patterns</td>
+        <td><span class="path-link">~/.claude/skills/CORE/Tools/fabric/Patterns/</span></td>
+        <td class="small muted">239 dirs &mdash; used by <code>/Fabric</code> skill</td>
+      </tr>
+      <tr>
+        <td class="dim small">Strategies</td>
+        <td><span class="path-link">~/.config/fabric/strategies/</span></td>
+        <td class="small muted">9 JSON files</td>
+      </tr>
+      <tr>
+        <td class="dim small">Config</td>
+        <td><span class="path-link">~/.config/fabric/.env</span></td>
+        <td class="small muted">API keys, default model, endpoints</td>
+      </tr>
+      <tr>
+        <td class="dim small">Contexts</td>
+        <td><span class="path-link">~/.config/fabric/contexts/</span></td>
+        <td class="small muted">Empty &mdash; persistent reference material</td>
+      </tr>
+      <tr>
+        <td class="dim small">Sessions</td>
+        <td><span class="path-link">~/.config/fabric/sessions/</span></td>
+        <td class="small muted">Empty &mdash; conversation history</td>
+      </tr>
+      <tr>
+        <td class="dim small">Extensions</td>
+        <td><span class="path-link">~/.config/fabric/extensions/</span></td>
+        <td class="small muted">Empty &mdash; custom functionality</td>
+      </tr>
+      <tr>
+        <td class="dim small">Skill Definition</td>
+        <td><span class="path-link">~/.claude/skills/Fabric/SKILL.md</span></td>
+        <td class="small muted">Claude Code skill mapping</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ CLI REFERENCE ═══════════════════════════ -->
+<div class="section" id="sec-cli">
+  <div class="section-title">⌨️ CLI Reference</div>
+
+  <div class="collapsible open">
+    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+      <span>🎯 Pattern Execution</span>
+      <span class="arrow">&#9654;</span>
+    </div>
+    <div class="collapsible-body"><div class="collapsible-content">
+      <table>
+        <tr><th>Flag</th><th>Description</th><th>Example</th></tr>
+        <tr><td><code>-p, --pattern</code></td><td>Select pattern to execute</td><td><code>fabric -p summarize</code></td></tr>
+        <tr><td><code>-v, --variable</code></td><td>Inject template variables</td><td><code>fabric -p X -v=#role:expert</code></td></tr>
+        <tr><td><code>-C, --context</code></td><td>Include saved context</td><td><code>fabric -p X -C mycontext</code></td></tr>
+        <tr><td><code>--session</code></td><td>Continue existing session</td><td><code>fabric --session project1</code></td></tr>
+        <tr><td><code>--strategy</code></td><td>Apply reasoning strategy</td><td><code>fabric -p X --strategy cot</code></td></tr>
+        <tr><td><code>-s, --stream</code></td><td>Real-time streaming output</td><td><code>fabric -p X --stream</code></td></tr>
+        <tr><td><code>--dry-run</code></td><td>Preview prompt without calling AI</td><td><code>fabric -p X --dry-run</code></td></tr>
+        <tr><td><code>-a, --attachment</code></td><td>Attach a file or URL</td><td><code>fabric -p X -a file.pdf</code></td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="collapsible">
+    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+      <span>🤖 Model & Vendor</span>
+      <span class="arrow">&#9654;</span>
+    </div>
+    <div class="collapsible-body"><div class="collapsible-content">
+      <table>
+        <tr><th>Flag</th><th>Description</th><th>Example</th></tr>
+        <tr><td><code>-m, --model</code></td><td>Specify AI model</td><td><code>fabric -m claude-opus-4-5</code></td></tr>
+        <tr><td><code>-V, --vendor</code></td><td>Set AI provider</td><td><code>fabric -V Anthropic</code></td></tr>
+        <tr><td><code>-t, --temperature</code></td><td>Creativity (0.0-2.0)</td><td><code>fabric -t 0.3</code></td></tr>
+        <tr><td><code>-T, --topp</code></td><td>Top-p sampling</td><td><code>fabric -T 0.9</code></td></tr>
+        <tr><td><code>--thinking</code></td><td>Reasoning depth</td><td><code>fabric --thinking high</code></td></tr>
+        <tr><td><code>-L, --listmodels</code></td><td>Show available models</td><td><code>fabric -L</code></td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="collapsible">
+    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+      <span>🎬 YouTube & Web</span>
+      <span class="arrow">&#9654;</span>
+    </div>
+    <div class="collapsible-body"><div class="collapsible-content">
+      <table>
+        <tr><th>Flag</th><th>Description</th><th>Example</th></tr>
+        <tr><td><code>-y, --youtube</code></td><td>Process YouTube URL</td><td><code>fabric -y "URL" -p summarize</code></td></tr>
+        <tr><td><code>--transcript</code></td><td>Extract plain transcript</td><td><code>fabric -y "URL" --transcript</code></td></tr>
+        <tr><td><code>--comments</code></td><td>Extract comments (needs API key)</td><td><code>fabric -y "URL" --comments</code></td></tr>
+        <tr><td><code>--playlist</code></td><td>Batch process playlist</td><td><code>fabric -y "URL" --playlist</code></td></tr>
+        <tr><td><code>-u, --scrape_url</code></td><td>Convert webpage to markdown</td><td><code>fabric -u "URL"</code></td></tr>
+        <tr><td><code>-q, --scrape_question</code></td><td>Web search query</td><td><code>fabric -q "topic"</code></td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="collapsible">
+    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+      <span>📋 Output & Management</span>
+      <span class="arrow">&#9654;</span>
+    </div>
+    <div class="collapsible-body"><div class="collapsible-content">
+      <table>
+        <tr><th>Flag</th><th>Description</th><th>Example</th></tr>
+        <tr><td><code>-c, --copy</code></td><td>Copy output to clipboard</td><td><code>fabric -p X -c</code></td></tr>
+        <tr><td><code>-o, --output</code></td><td>Save to file</td><td><code>fabric -p X -o out.md</code></td></tr>
+        <tr><td><code>-l, --listpatterns</code></td><td>List all patterns</td><td><code>fabric -l</code></td></tr>
+        <tr><td><code>-U, --updatepatterns</code></td><td>Sync from GitHub repo</td><td><code>fabric -U</code></td></tr>
+        <tr><td><code>-S, --setup</code></td><td>Initial configuration</td><td><code>fabric -S</code></td></tr>
+        <tr><td><code>--serve</code></td><td>Launch REST API server</td><td><code>fabric --serve</code></td></tr>
+      </table>
+    </div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ LOCAL INSTALL ═══════════════════════════ -->
+<div class="section" id="sec-local">
+  <div class="section-title">💻 Local Installation</div>
+
+  <div class="card">
+    <div class="card-title">⚖️ Official vs Your Install</div>
+    <div class="scroll-table-wrapper">
+      <table class="compare-table">
+        <tr>
+          <th></th>
+          <th class="official">Official (GitHub)</th>
+          <th class="local">Your Machine</th>
+          <th>Status</th>
+        </tr>
+        <tr>
+          <td>Version</td>
+          <td>v1.4.419 (latest)</td>
+          <td>v1.4.374</td>
+          <td><span class="tag-inline tag-orange">45 versions behind</span></td>
+        </tr>
+        <tr>
+          <td>Patterns</td>
+          <td>238 (official repo)</td>
+          <td>239 (skill copy)</td>
+          <td><span class="tag-inline tag-blue">+1 custom</span></td>
+        </tr>
+        <tr>
+          <td>Strategies</td>
+          <td>9</td>
+          <td>9</td>
+          <td><span class="tag-inline tag-green">Match</span></td>
+        </tr>
+        <tr>
+          <td>Default Model</td>
+          <td>Configurable</td>
+          <td>claude-opus-4-5</td>
+          <td><span class="tag-inline tag-purple">Anthropic primary</span></td>
+        </tr>
+        <tr>
+          <td>Auth Method</td>
+          <td>API keys</td>
+          <td>Anthropic OAuth + OpenAI key</td>
+          <td><span class="tag-inline tag-green">Configured</span></td>
+        </tr>
+        <tr>
+          <td>Install Method</td>
+          <td>go install / brew / docker</td>
+          <td>Homebrew (<code>brew install fabric-ai</code>)</td>
+          <td><span class="tag-inline tag-green">Standard</span></td>
+        </tr>
+        <tr>
+          <td>Contexts</td>
+          <td>Supported</td>
+          <td>Empty</td>
+          <td><span class="tag-inline tag-orange">Unused</span></td>
+        </tr>
+        <tr>
+          <td>Sessions</td>
+          <td>Supported</td>
+          <td>Empty</td>
+          <td><span class="tag-inline tag-orange">Unused</span></td>
+        </tr>
+        <tr>
+          <td>Extensions</td>
+          <td>Supported</td>
+          <td>Empty</td>
+          <td><span class="tag-inline tag-orange">Unused</span></td>
+        </tr>
+        <tr>
+          <td>Execution Paths</td>
+          <td>CLI only</td>
+          <td>CLI + Claude Code Skill</td>
+          <td><span class="tag-inline tag-purple">Dual-path</span></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="protip">
+    <div><strong>You're 45 versions behind.</strong> Run <code>brew upgrade fabric-ai</code> to get the latest. Recent additions include Azure AI Gateway, Anthropic 1M context models, and new audit patterns. Then run <code>fabric -U</code> to sync patterns.</div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🟢 What's Working</div>
+      <ul style="font-size:13px; color:var(--text-dim); padding-left:18px;">
+        <li>CLI installed and aliased as <code>fabric</code></li>
+        <li>Anthropic OAuth authentication active</li>
+        <li>OpenAI fallback configured</li>
+        <li>239 patterns synced and available</li>
+        <li>All 9 strategies present</li>
+        <li>Claude Code <code>/Fabric</code> skill functional</li>
+        <li>Dual execution path (CLI + skill)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-title">🟡 Untapped Features</div>
+      <ul style="font-size:13px; color:var(--text-dim); padding-left:18px;">
+        <li><strong>Contexts</strong> &mdash; save reference docs for patterns to use</li>
+        <li><strong>Sessions</strong> &mdash; multi-turn conversations with memory</li>
+        <li><strong>Extensions</strong> &mdash; custom pattern libraries</li>
+        <li><strong>REST API</strong> &mdash; serve Fabric as a web endpoint</li>
+        <li><strong>Image generation</strong> &mdash; DALL-E integration</li>
+        <li><strong>Strategies</strong> &mdash; combine with patterns for deeper reasoning</li>
+        <li><strong>Template variables</strong> &mdash; <code>-v=#role:expert</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ YOUTUBE ═══════════════════════════ -->
+<div class="section" id="sec-youtube">
+  <div class="section-title">🎬 YouTube Integration</div>
+
+  <div class="card">
+    <div class="card-title">📹 Video Processing Pipeline</div>
+    <p class="small dim" style="margin-bottom:16px">Fabric has first-class YouTube support via <code>yt-dlp</code>. Extract transcripts, comments, and metadata, then pipe through any pattern.</p>
+
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div><strong>Input URL</strong><br><span class="small dim">Any YouTube video, shorts, or playlist URL</span></div>
+    </div>
+    <div class="flow-connector"></div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div><strong>yt-dlp extracts data</strong><br><span class="small dim">Transcript, timestamps, comments, metadata</span></div>
+    </div>
+    <div class="flow-connector"></div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div><strong>Pattern processes content</strong><br><span class="small dim">extract_wisdom, summarize, analyze_claims, etc.</span></div>
+    </div>
+    <div class="flow-connector"></div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div><strong>Structured output</strong><br><span class="small dim">stdout, clipboard, file, or pipe to next pattern</span></div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="code-block">
+<span class="comment"># Quick video summary</span>
+<span class="cmd">fabric</span> <span class="flag">-y</span> <span class="str">"https://youtube.com/watch?v=abc"</span> <span class="flag">-p</span> summarize <span class="flag">-s</span>
+
+<span class="comment"># Extract wisdom from a podcast</span>
+<span class="cmd">fabric</span> <span class="flag">-y</span> <span class="str">"URL"</span> <span class="flag">-p</span> extract_wisdom <span class="flag">--stream</span>
+
+<span class="comment"># Get timestamped transcript only (no AI)</span>
+<span class="cmd">fabric</span> <span class="flag">-y</span> <span class="str">"URL"</span> <span class="flag">--transcript-with-timestamps</span>
+
+<span class="comment"># Batch process a playlist</span>
+<span class="cmd">fabric</span> <span class="flag">-y</span> <span class="str">"PLAYLIST_URL"</span> <span class="flag">--playlist</span> <span class="flag">-p</span> summarize
+
+<span class="comment"># Get comments (requires YouTube API key)</span>
+<span class="cmd">fabric</span> <span class="flag">-y</span> <span class="str">"URL"</span> <span class="flag">--comments</span>
+
+<span class="comment"># Private/age-restricted content</span>
+<span class="cmd">fabric</span> <span class="flag">-y</span> <span class="str">"URL"</span> <span class="flag">--yt-dlp-args</span> <span class="str">"--cookies-from-browser chrome"</span>
+    </div>
+  </div>
+
+  <div class="protip">
+    <div><strong>Best patterns for YouTube:</strong> <code>extract_wisdom</code> (podcasts/talks), <code>summarize</code> (quick overview), <code>create_keynote</code> (extract presentation structure), <code>extract_recommendations</code> (how-to videos).</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ PRO TIPS ═══════════════════════════ -->
+<div class="section" id="sec-tips">
+  <div class="section-title">💡 Pro Tips</div>
+
+  <div class="collapsible open">
+    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+      <span>🔗 Power User: Chaining Patterns</span>
+      <span class="arrow">&#9654;</span>
+    </div>
+    <div class="collapsible-body"><div class="collapsible-content">
+      <p class="small dim" style="margin-bottom:10px">Unix pipes let you chain patterns. The output of one becomes the input of the next:</p>
+      <div class="code-block">
+<span class="comment"># Extract wisdom, then distill to micro-summary</span>
+<span class="cmd">cat</span> article.txt | <span class="cmd">fabric</span> <span class="flag">-p</span> extract_wisdom | <span class="cmd">fabric</span> <span class="flag">-p</span> summarize_micro
+
+<span class="comment"># YouTube → insights → Anki flashcards</span>
+<span class="cmd">fabric</span> <span class="flag">-y</span> <span class="str">"URL"</span> <span class="flag">-p</span> extract_wisdom | <span class="cmd">fabric</span> <span class="flag">-p</span> create_quiz
+
+<span class="comment"># Analyze claims, then visualize the argument structure</span>
+<span class="cmd">cat</span> debate.txt | <span class="cmd">fabric</span> <span class="flag">-p</span> analyze_claims | <span class="cmd">fabric</span> <span class="flag">-p</span> create_mermaid_visualization
+      </div>
+    </div></div>
+  </div>
+
+  <div class="collapsible">
+    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+      <span>📋 Contexts: Persistent Reference Material</span>
+      <span class="arrow">&#9654;</span>
+    </div>
+    <div class="collapsible-body"><div class="collapsible-content">
+      <p class="small dim" style="margin-bottom:10px">Contexts are saved text snippets that get injected alongside patterns. Great for company info, personal background, or project specs:</p>
+      <div class="code-block">
+<span class="comment"># Save a context</span>
+<span class="cmd">echo</span> <span class="str">"I'm a software engineer specializing in TypeScript and Swift..."</span> > ~/.config/fabric/contexts/me.md
+
+<span class="comment"># Use it with any pattern</span>
+<span class="cmd">fabric</span> <span class="flag">-p</span> improve_writing <span class="flag">-C</span> me
+
+<span class="comment"># List all saved contexts</span>
+<span class="cmd">fabric</span> <span class="flag">-x</span>
+      </div>
+      <p class="small" style="color:var(--warning); margin-top:8px">You haven't set up any contexts yet &mdash; this is a high-value untapped feature.</p>
+    </div></div>
+  </div>
+
+  <div class="collapsible">
+    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+      <span>🧠 Strategies: When to Use Which</span>
+      <span class="arrow">&#9654;</span>
+    </div>
+    <div class="collapsible-body"><div class="collapsible-content">
+      <table>
+        <tr><th>Situation</th><th>Best Strategy</th><th>Why</th></tr>
+        <tr><td>Complex analysis, step-by-step reasoning</td><td><code>cot</code></td><td>Forces sequential logic</td></tr>
+        <tr><td>Creative or ambiguous problems</td><td><code>tot</code></td><td>Explores multiple paths</td></tr>
+        <tr><td>Need maximum density/compression</td><td><code>cod</code></td><td>Iteratively densifies</td></tr>
+        <tr><td>Want to minimize hallucination</td><td><code>self-consistent</code></td><td>Cross-validates answers</td></tr>
+        <tr><td>Writing/polish tasks</td><td><code>self-refine</code></td><td>Self-critique loop</td></tr>
+        <tr><td>Learning/education content</td><td><code>ltm</code></td><td>Simple-to-complex build</td></tr>
+        <tr><td>Quick, well-defined tasks</td><td><code>standard</code></td><td>No overhead</td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="collapsible">
+    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+      <span>🎯 Best Patterns for Software Engineers</span>
+      <span class="arrow">&#9654;</span>
+    </div>
+    <div class="collapsible-body"><div class="collapsible-content">
+      <table>
+        <tr><th>Task</th><th>Pattern</th><th>Usage</th></tr>
+        <tr><td>Understand unfamiliar code</td><td><code>explain_code</code></td><td><code>cat file.ts | fabric -p explain_code</code></td></tr>
+        <tr><td>Distill articles/docs</td><td><code>extract_wisdom</code></td><td><code>fabric -u "URL" -p extract_wisdom</code></td></tr>
+        <tr><td>Write PR descriptions</td><td><code>write_pull-request</code></td><td><code>git diff main | fabric -p write_pull-request</code></td></tr>
+        <tr><td>Architecture diagrams</td><td><code>create_mermaid_visualization</code></td><td>Describe system, get Mermaid code</td></tr>
+        <tr><td>Threat modeling</td><td><code>create_threat_model</code></td><td>Describe feature, get STRIDE analysis</td></tr>
+        <tr><td>Code review</td><td><code>review_code</code></td><td><code>git diff | fabric -p review_code</code></td></tr>
+        <tr><td>Polish docs/READMEs</td><td><code>improve_writing</code></td><td><code>cat README.md | fabric -p improve_writing</code></td></tr>
+        <tr><td>Security assessment</td><td><code>analyze_threat_report</code></td><td>Structured threat analysis</td></tr>
+      </table>
+    </div></div>
+  </div>
+
+  <div class="collapsible">
+    <div class="collapsible-header" onclick="toggleCollapsible(this)">
+      <span>⚡ Quick Maintenance Commands</span>
+      <span class="arrow">&#9654;</span>
+    </div>
+    <div class="collapsible-body"><div class="collapsible-content">
+      <div class="code-block">
+<span class="comment"># Update CLI to latest version</span>
+<span class="cmd">brew</span> upgrade fabric-ai
+
+<span class="comment"># Update patterns from GitHub</span>
+<span class="cmd">fabric</span> <span class="flag">-U</span>
+
+<span class="comment"># Check current default model</span>
+<span class="cmd">grep</span> DEFAULT_MODEL ~/.config/fabric/.env
+
+<span class="comment"># Change default model</span>
+<span class="cmd">fabric</span> <span class="flag">-d</span>
+
+<span class="comment"># List all configured models</span>
+<span class="cmd">fabric</span> <span class="flag">-L</span>
+
+<span class="comment"># List all vendors</span>
+<span class="cmd">fabric</span> <span class="flag">--listvendors</span>
+
+<span class="comment"># Re-run setup (reconfigure API keys, etc.)</span>
+<span class="cmd">fabric</span> <span class="flag">-S</span>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+</div> <!-- /container -->
+
+<!-- ═══════════════════════════ MODAL ═══════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="document.getElementById('modal-overlay').classList.remove('show')">&times;</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+// ── Pattern Data ──
+const PATTERNS = [
+  // ANALYZE
+  {name:"analyze_answers",cat:"analyze",desc:"Evaluate answers against criteria",star:false},
+  {name:"analyze_candidates",cat:"analyze",desc:"Evaluate candidates for a job role",star:false},
+  {name:"analyze_cfp_submission",cat:"analyze",desc:"Evaluate conference talk proposals",star:false},
+  {name:"analyze_claims",cat:"analyze",desc:"Fact-check and rate truth claims objectively",star:true},
+  {name:"analyze_comments",cat:"analyze",desc:"Analyze public comments and feedback",star:false},
+  {name:"analyze_debate",cat:"analyze",desc:"Score and analyze debate performances",star:false},
+  {name:"analyze_email_headers",cat:"analyze",desc:"SPF/DKIM/DMARC email security analysis",star:false},
+  {name:"analyze_incident",cat:"analyze",desc:"Analyze security breach articles",star:false},
+  {name:"analyze_interviewer_techniques",cat:"analyze",desc:"Evaluate interview question quality",star:false},
+  {name:"analyze_logs",cat:"analyze",desc:"Parse and analyze log files",star:false},
+  {name:"analyze_malware",cat:"analyze",desc:"Extract malware IOCs and behavior",star:false},
+  {name:"analyze_military_budget",cat:"analyze",desc:"Defense spending analysis",star:false},
+  {name:"analyze_mistakes",cat:"analyze",desc:"Identify patterns in mistakes/failures",star:false},
+  {name:"analyze_paper",cat:"analyze",desc:"Deep academic paper analysis",star:true},
+  {name:"analyze_paper_simple",cat:"analyze",desc:"Quick academic paper overview",star:false},
+  {name:"analyze_patent",cat:"analyze",desc:"Patent analysis and assessment",star:false},
+  {name:"analyze_personality",cat:"analyze",desc:"Psychological profile analysis",star:false},
+  {name:"analyze_presentation",cat:"analyze",desc:"Evaluate presentations and talks",star:false},
+  {name:"analyze_product_feedback",cat:"analyze",desc:"Categorize product feedback themes",star:false},
+  {name:"analyze_proposition",cat:"analyze",desc:"Evaluate ballot propositions",star:false},
+  {name:"analyze_prose",cat:"analyze",desc:"Rate writing quality (novelty, clarity, prose)",star:true},
+  {name:"analyze_prose_json",cat:"analyze",desc:"Prose analysis with JSON output",star:false},
+  {name:"analyze_prose_pinker",cat:"analyze",desc:"Prose analysis using Pinker's principles",star:false},
+  {name:"analyze_risk",cat:"analyze",desc:"Third-party vendor risk assessment",star:false},
+  {name:"analyze_sales_call",cat:"analyze",desc:"Sales performance evaluation",star:false},
+  {name:"analyze_spiritual_text",cat:"analyze",desc:"Religious/spiritual text analysis",star:false},
+  {name:"analyze_tech_impact",cat:"analyze",desc:"Technology impact assessment",star:false},
+  {name:"analyze_terraform_plan",cat:"analyze",desc:"Infrastructure change assessment",star:false},
+  {name:"analyze_threat_report",cat:"analyze",desc:"Cybersecurity threat report analysis",star:true},
+  {name:"analyze_threat_report_trends",cat:"analyze",desc:"Track threat landscape changes",star:false},
+
+  // CREATE
+  {name:"create_5_sentence_summary",cat:"create",desc:"Concise 5-sentence summary",star:false},
+  {name:"create_academic_paper",cat:"create",desc:"Academic paper structure and writing",star:false},
+  {name:"create_ai_jobs_analysis",cat:"create",desc:"AI job market analysis",star:false},
+  {name:"create_aphorisms",cat:"create",desc:"Generate concise wisdom statements",star:false},
+  {name:"create_art_prompt",cat:"create",desc:"Generate AI art prompts",star:false},
+  {name:"create_better_frame",cat:"create",desc:"Reframe negative situations",star:false},
+  {name:"create_coding_project",cat:"create",desc:"Wireframe and starter code generation",star:true},
+  {name:"create_command",cat:"create",desc:"Generate CLI commands from description",star:false},
+  {name:"create_cyber_summary",cat:"create",desc:"Cybersecurity news summary",star:false},
+  {name:"create_design_document",cat:"create",desc:"System design with C4 model",star:true},
+  {name:"create_diy",cat:"create",desc:"DIY project instructions",star:false},
+  {name:"create_flash_cards",cat:"create",desc:"Generate study flashcards",star:false},
+  {name:"create_formal_email",cat:"create",desc:"Professional email drafting",star:false},
+  {name:"create_git_diff_commit",cat:"create",desc:"Commit message from git diff",star:false},
+  {name:"create_graph_from_input",cat:"create",desc:"Generate graph/chart descriptions",star:false},
+  {name:"create_hormozi_offer",cat:"create",desc:"Alex Hormozi-style offer creation",star:false},
+  {name:"create_idea_compass",cat:"create",desc:"Idea exploration framework",star:false},
+  {name:"create_investigation_visualization",cat:"create",desc:"Investigation flow diagrams",star:false},
+  {name:"create_keynote",cat:"create",desc:"TED-style presentation structure",star:true},
+  {name:"create_logo",cat:"create",desc:"Logo design prompt generation",star:false},
+  {name:"create_markmap_visualization",cat:"create",desc:"Markmap mind map generation",star:false},
+  {name:"create_mermaid_visualization",cat:"create",desc:"Mermaid diagram from concepts",star:true},
+  {name:"create_micro_summary",cat:"create",desc:"Ultra-concise one-line summary",star:false},
+  {name:"create_network_threat_landscape",cat:"create",desc:"Network security threat mapping",star:false},
+  {name:"create_newsletter_entry",cat:"create",desc:"Newsletter content creation",star:false},
+  {name:"create_npc",cat:"create",desc:"RPG NPC character generation",star:false},
+  {name:"create_pattern",cat:"create",desc:"Create new Fabric patterns",star:false},
+  {name:"create_positive_affirmations",cat:"create",desc:"Generate positive affirmations",star:false},
+  {name:"create_prd",cat:"create",desc:"Product Requirements Document",star:true},
+  {name:"create_prediction_block",cat:"create",desc:"Structured prediction framework",star:false},
+  {name:"create_quiz",cat:"create",desc:"Generate quiz questions from content",star:false},
+  {name:"create_reading_plan",cat:"create",desc:"Structured reading plan",star:false},
+  {name:"create_recipe",cat:"create",desc:"Recipe generation from ingredients",star:false},
+  {name:"create_report_finding",cat:"create",desc:"Security finding documentation",star:false},
+  {name:"create_rpg_summary",cat:"create",desc:"RPG session summary",star:false},
+  {name:"create_security_update",cat:"create",desc:"Security newsletter creation",star:false},
+  {name:"create_show_intro",cat:"create",desc:"Podcast/show intro generation",star:false},
+  {name:"create_sigma_rules",cat:"create",desc:"SIEM Sigma detection rules",star:false},
+  {name:"create_story_explanation",cat:"create",desc:"Explain concepts through stories",star:false},
+  {name:"create_stride_threat_model",cat:"create",desc:"STRIDE security threat model",star:true},
+  {name:"create_summary",cat:"create",desc:"Structured summary with takeaways",star:true},
+  {name:"create_tags",cat:"create",desc:"Generate content tags/categories",star:false},
+  {name:"create_threat_scenarios",cat:"create",desc:"Security threat scenario creation",star:false},
+  {name:"create_ttrc_graph",cat:"create",desc:"Time-to-remediate chart",star:false},
+  {name:"create_ttrc_narrative",cat:"create",desc:"Remediation timeline narrative",star:false},
+  {name:"create_upgrade_pack",cat:"create",desc:"Personal development upgrade plan",star:false},
+  {name:"create_user_story",cat:"create",desc:"Agile user story generation",star:false},
+  {name:"create_video_chapters",cat:"create",desc:"YouTube chapter timestamps",star:false},
+  {name:"create_visualization",cat:"create",desc:"Data visualization suggestions",star:false},
+
+  // EXTRACT
+  {name:"extract_algorithm_update_recommendations",cat:"extract",desc:"Process improvement extraction",star:false},
+  {name:"extract_article_wisdom",cat:"extract",desc:"Article-focused insight extraction",star:false},
+  {name:"extract_book_ideas",cat:"extract",desc:"50-100 ideas from books",star:true},
+  {name:"extract_book_recommendations",cat:"extract",desc:"Book recommendations mentioned",star:false},
+  {name:"extract_business_ideas",cat:"extract",desc:"Business opportunities from content",star:false},
+  {name:"extract_chapter_summary_bullet_points",cat:"extract",desc:"Chapter-by-chapter bullet summaries",star:false},
+  {name:"extract_characters",cat:"extract",desc:"Character identification and analysis",star:false},
+  {name:"extract_controversial_ideas",cat:"extract",desc:"Find controversial viewpoints",star:false},
+  {name:"extract_core_message",cat:"extract",desc:"Single core message extraction",star:false},
+  {name:"extract_ctf_writeup",cat:"extract",desc:"CTF challenge writeup extraction",star:false},
+  {name:"extract_domains",cat:"extract",desc:"URL and domain extraction",star:false},
+  {name:"extract_extraordinary_claims",cat:"extract",desc:"Identify extraordinary claims",star:false},
+  {name:"extract_ideas",cat:"extract",desc:"Key ideas from text",star:true},
+  {name:"extract_insights",cat:"extract",desc:"Most powerful insights",star:true},
+  {name:"extract_insights_dm",cat:"extract",desc:"Daniel Miessler's insight format",star:false},
+  {name:"extract_instructions",cat:"extract",desc:"Extract instructions from content",star:false},
+  {name:"extract_jokes_and_humor",cat:"extract",desc:"Find humor in content",star:false},
+  {name:"extract_latest_video",cat:"extract",desc:"Latest video from channel",star:false},
+  {name:"extract_main_idea",cat:"extract",desc:"Single main idea",star:false},
+  {name:"extract_most_redeeming_thing",cat:"extract",desc:"Find the most redeeming aspect",star:false},
+  {name:"extract_patterns",cat:"extract",desc:"Identify recurring patterns",star:false},
+  {name:"extract_poc",cat:"extract",desc:"Extract proof of concept details",star:false},
+  {name:"extract_predictions",cat:"extract",desc:"Find predictions made in content",star:false},
+  {name:"extract_primary_problem",cat:"extract",desc:"Identify the core problem",star:false},
+  {name:"extract_primary_solution",cat:"extract",desc:"Identify the proposed solution",star:false},
+  {name:"extract_product_features",cat:"extract",desc:"Product feature extraction",star:false},
+  {name:"extract_questions",cat:"extract",desc:"Extract questions asked/implied",star:false},
+  {name:"extract_recommendations",cat:"extract",desc:"Practical recommendations",star:true},
+  {name:"extract_references",cat:"extract",desc:"Extract all references/citations",star:false},
+  {name:"extract_skills",cat:"extract",desc:"Skills mentioned in content",star:false},
+  {name:"extract_song_meaning",cat:"extract",desc:"Song lyric interpretation",star:false},
+  {name:"extract_sponsors",cat:"extract",desc:"Identify sponsors/partnerships",star:false},
+  {name:"extract_videoid",cat:"extract",desc:"Extract YouTube video IDs",star:false},
+  {name:"extract_wisdom",cat:"extract",desc:"Deep insight extraction: ideas, quotes, habits, facts",star:true},
+  {name:"extract_wisdom_agents",cat:"extract",desc:"Multi-agent wisdom extraction",star:false},
+  {name:"extract_wisdom_dm",cat:"extract",desc:"Daniel Miessler format wisdom",star:false},
+  {name:"extract_wisdom_nometa",cat:"extract",desc:"Wisdom extraction without metadata",star:false},
+
+  // SUMMARIZE
+  {name:"summarize",cat:"summarize",desc:"20-word summary + 10 main points + 5 takeaways",star:true},
+  {name:"summarize_debate",cat:"summarize",desc:"Debate summary with positions",star:false},
+  {name:"summarize_git_changes",cat:"summarize",desc:"Git commit history summary",star:false},
+  {name:"summarize_git_diff",cat:"summarize",desc:"Git diff explanation",star:false},
+  {name:"summarize_lecture",cat:"summarize",desc:"Lecture/talk summary",star:false},
+  {name:"summarize_legislation",cat:"summarize",desc:"Legal bill/law summary",star:false},
+  {name:"summarize_meeting",cat:"summarize",desc:"Meeting transcript summary",star:true},
+  {name:"summarize_micro",cat:"summarize",desc:"20-word summary + 3 points",star:false},
+  {name:"summarize_newsletter",cat:"summarize",desc:"Newsletter digest summary",star:false},
+  {name:"summarize_paper",cat:"summarize",desc:"Academic paper summary",star:true},
+  {name:"summarize_prompt",cat:"summarize",desc:"Summarize an AI prompt",star:false},
+  {name:"summarize_pull-requests",cat:"summarize",desc:"PR summary and review",star:false},
+  {name:"summarize_rpg_session",cat:"summarize",desc:"RPG game session recap",star:false},
+
+  // EXPLAIN
+  {name:"explain_code",cat:"explain",desc:"Break down code step by step",star:true},
+  {name:"explain_docs",cat:"explain",desc:"Restructure documentation",star:false},
+  {name:"explain_math",cat:"explain",desc:"Mathematical concept explanation",star:false},
+  {name:"explain_project",cat:"explain",desc:"Project overview explanation",star:false},
+  {name:"explain_terms",cat:"explain",desc:"Define technical terminology",star:false},
+
+  // IMPROVE
+  {name:"improve_academic_writing",cat:"improve",desc:"Academic language refinement",star:false},
+  {name:"improve_prompt",cat:"improve",desc:"Enhance AI prompts",star:false},
+  {name:"improve_report_finding",cat:"improve",desc:"Improve security findings",star:false},
+  {name:"improve_writing",cat:"improve",desc:"Grammar, clarity, style enhancement",star:true},
+
+  // WRITE
+  {name:"write_essay",cat:"write",desc:"Essay from notes/ideas",star:true},
+  {name:"write_hackerone_report",cat:"write",desc:"Bug bounty report",star:false},
+  {name:"write_latex",cat:"write",desc:"LaTeX document generation",star:false},
+  {name:"write_micro_essay",cat:"write",desc:"150-word micro-essay",star:false},
+  {name:"write_nuclei_template_rule",cat:"write",desc:"Nuclei scanner template",star:false},
+  {name:"write_pull-request",cat:"write",desc:"PR title and description",star:true},
+  {name:"write_semgrep_rule",cat:"write",desc:"Semgrep security rule",star:false},
+
+  // TELOS / Personal
+  {name:"t_assess_creative_output",cat:"telos",desc:"Evaluate creative work quality",star:false},
+  {name:"t_build_mission",cat:"telos",desc:"Define personal mission",star:false},
+  {name:"t_career_counselor",cat:"telos",desc:"Career guidance and advice",star:false},
+  {name:"t_create_h_and_s_plan",cat:"telos",desc:"Health and safety planning",star:false},
+  {name:"t_define_terms",cat:"telos",desc:"Personal term definitions",star:false},
+  {name:"t_find_blindspots",cat:"telos",desc:"Identify cognitive blind spots",star:true},
+  {name:"t_find_logical_fallacies",cat:"telos",desc:"Logic error detection",star:false},
+  {name:"t_give_encouragement",cat:"telos",desc:"Motivational guidance",star:false},
+  {name:"t_life_outlook",cat:"telos",desc:"Life perspective assessment",star:false},
+  {name:"t_prepare_for_interview",cat:"telos",desc:"Interview preparation",star:false},
+  {name:"t_red_team_thinking",cat:"telos",desc:"Critical red-team analysis",star:true},
+  {name:"t_suggest_pattern",cat:"telos",desc:"Recommend Fabric patterns",star:false},
+  {name:"t_visualize_mission_goals_projects",cat:"telos",desc:"ASCII mission visualization",star:false},
+  {name:"t_year_in_review",cat:"telos",desc:"Annual retrospective analysis",star:false},
+
+  // OTHER
+  {name:"agility_story",cat:"other",desc:"Agile story generation",star:false},
+  {name:"ask_secure_by_design_questions",cat:"other",desc:"Security design questions",star:false},
+  {name:"capture_thinkers_work",cat:"other",desc:"Document thinker's body of work",star:false},
+  {name:"check_agreement",cat:"other",desc:"Contract/agreement review",star:false},
+  {name:"clean_text",cat:"other",desc:"Clean and normalize text",star:false},
+  {name:"coding_master",cat:"other",desc:"Expert coding assistance",star:false},
+  {name:"compare_and_contrast",cat:"other",desc:"Side-by-side comparison",star:false},
+  {name:"convert_to_markdown",cat:"other",desc:"HTML to Markdown conversion",star:false},
+  {name:"dialog_with_socrates",cat:"other",desc:"Socratic dialogue simulation",star:false},
+  {name:"fix_typos",cat:"other",desc:"Proofreading and typo fixes",star:false},
+  {name:"get_wow_per_minute",cat:"other",desc:"Content engagement rating",star:false},
+  {name:"humanize",cat:"other",desc:"Make AI text sound human",star:false},
+  {name:"identify_dsrp_distinctions",cat:"other",desc:"Systems thinking distinctions",star:false},
+  {name:"identify_job_stories",cat:"other",desc:"Jobs-to-be-done extraction",star:false},
+  {name:"judge_output",cat:"other",desc:"Evaluate AI output quality",star:false},
+  {name:"label_and_rate",cat:"other",desc:"Content labeling and rating",star:false},
+  {name:"md_callout",cat:"other",desc:"Markdown callout formatting",star:false},
+  {name:"official_pattern_template",cat:"other",desc:"Template for new patterns",star:false},
+  {name:"prepare_7s_strategy",cat:"other",desc:"McKinsey 7S analysis",star:false},
+  {name:"provide_guidance",cat:"other",desc:"General guidance and advice",star:false},
+  {name:"rate_ai_response",cat:"other",desc:"Grade AI output quality",star:false},
+  {name:"rate_ai_result",cat:"other",desc:"Rate AI task completion",star:false},
+  {name:"rate_content",cat:"other",desc:"Content quality scoring",star:false},
+  {name:"rate_value",cat:"other",desc:"Value assessment rating",star:false},
+  {name:"raw_query",cat:"other",desc:"Pass-through raw query",star:false},
+  {name:"recommend_artists",cat:"other",desc:"Music artist recommendations",star:false},
+  {name:"recommend_pipeline_upgrades",cat:"other",desc:"CI/CD pipeline improvements",star:false},
+  {name:"recommend_talkpanel_topics",cat:"other",desc:"Panel discussion topics",star:false},
+  {name:"review_code",cat:"other",desc:"Code review and feedback",star:true},
+  {name:"review_design",cat:"other",desc:"Design review feedback",star:false},
+  {name:"show_fabric_options_markmap",cat:"other",desc:"Fabric options as mind map",star:false},
+  {name:"suggest_pattern",cat:"other",desc:"Recommend best pattern for a task",star:true},
+  {name:"translate",cat:"other",desc:"Language translation",star:false},
+];
+
+const CAT_ICONS = {
+  analyze: "🔍", create: "🛠️", extract: "💎", summarize: "📝",
+  explain: "💡", improve: "✨", write: "✍️", telos: "🧭", other: "🔧"
+};
+
+const CAT_COLORS = {
+  analyze: "#f85149", create: "#58a6ff", extract: "#a371f7", summarize: "#3fb950",
+  explain: "#d29922", improve: "#f0883e", write: "#f778ba", telos: "#79c0ff", other: "#8b949e"
+};
+
+// ── Render patterns ──
+let activeCategory = 'all';
+
+function renderPatterns() {
+  const search = document.getElementById('pattern-search').value.toLowerCase();
+  const list = document.getElementById('pattern-list');
+  const filtered = PATTERNS.filter(p => {
+    const matchCat = activeCategory === 'all' || p.cat === activeCategory;
+    const matchSearch = !search || p.name.includes(search) || p.desc.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+
+  list.innerHTML = filtered.map(p => `
+    <div class="pattern-item cat-${p.cat}" onclick="showPatternDetail('${p.name}')">
+      <div class="p-icon">${CAT_ICONS[p.cat]}</div>
+      <div>
+        <div class="p-name">${p.star ? '★ ' : ''}${p.name}</div>
+        <div class="p-desc">${p.desc}</div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('pattern-count').textContent = `${filtered.length} pattern${filtered.length !== 1 ? 's' : ''}`;
+}
+
+function filterPatterns() { renderPatterns(); }
+
+function filterCategory(cat, btn) {
+  activeCategory = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPatterns();
+}
+
+function showPatternDetail(name) {
+  const p = PATTERNS.find(x => x.name === name);
+  if (!p) return;
+  const color = CAT_COLORS[p.cat];
+  document.getElementById('modal-content').innerHTML = `
+    <h3>${p.star ? '★ ' : ''}${p.name}</h3>
+    <span class="tag" style="background:${color}22; color:${color}; border:1px solid ${color}44">${p.cat}</span>
+    <p style="color:var(--text-dim); font-size:14px; margin-bottom:16px">${p.desc}</p>
+    <div style="font-size:13px; margin-bottom:12px">
+      <strong>CLI Usage:</strong>
+      <div class="code-block" style="margin-top:6px; font-size:12px">
+        <span class="comment"># Pipe content</span><br>
+        <span class="cmd">echo</span> <span class="str">"content"</span> | <span class="cmd">fabric</span> <span class="flag">-p</span> ${name}<br><br>
+        <span class="comment"># From file</span><br>
+        <span class="cmd">cat</span> input.txt | <span class="cmd">fabric</span> <span class="flag">-p</span> ${name} <span class="flag">-s</span><br><br>
+        <span class="comment"># With strategy</span><br>
+        <span class="cmd">fabric</span> <span class="flag">-p</span> ${name} <span class="flag">--strategy</span> cot
+      </div>
+    </div>
+    <div style="font-size:13px">
+      <strong>Claude Code:</strong>
+      <div class="code-block" style="margin-top:6px; font-size:12px">
+        /Fabric ${name}
+      </div>
+    </div>
+    <div style="font-size:12px; color:var(--text-muted); margin-top:12px">
+      Pattern file: <code>~/.claude/skills/CORE/Tools/fabric/Patterns/${name}/system.md</code>
+    </div>
+  `;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) {
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+}
+
+// ── Section nav ──
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.section-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Collapsible ──
+function toggleCollapsible(header) {
+  header.parentElement.classList.toggle('open');
+}
+
+// ── Keyboard shortcut ──
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('modal-overlay').classList.remove('show');
+  }
+  if (e.key === '/' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') {
+    e.preventDefault();
+    const searchInput = document.getElementById('pattern-search');
+    if (searchInput) {
+      showSection('patterns');
+      document.querySelectorAll('.section-nav button').forEach(b => {
+        b.classList.remove('active');
+        if (b.textContent.includes('Pattern')) b.classList.add('active');
+      });
+      searchInput.focus();
+    }
+  }
+});
+
+// ── Init ──
+renderPatterns();
+</script>
+</body>
+</html>
