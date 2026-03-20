@@ -1,0 +1,109 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "loutools",
+  "title": "LouTools Remote",
+  "description": "Universal media remote control — play/pause, seek, volume, speed across YouTube, Suno, Spotify without stealing focus",
+  "icon": "extension-icon.png",
+  "author": "loudog",
+  "categories": ["Media", "Productivity"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "playpause",
+      "title": "Play / Pause",
+      "description": "Toggle play/pause on the active media target",
+      "mode": "no-view"
+    },
+    {
+      "name": "seek-forward",
+      "title": "Seek Forward 10s",
+      "description": "Skip forward 10 seconds",
+      "mode": "no-view"
+    },
+    {
+      "name": "seek-back",
+      "title": "Seek Back 10s",
+      "description": "Skip backward 10 seconds",
+      "mode": "no-view"
+    },
+    {
+      "name": "volume-up",
+      "title": "Volume Up",
+      "description": "Increase volume by 5%",
+      "mode": "no-view"
+    },
+    {
+      "name": "volume-down",
+      "title": "Volume Down",
+      "description": "Decrease volume by 5%",
+      "mode": "no-view"
+    },
+    {
+      "name": "mute",
+      "title": "Mute",
+      "description": "Toggle mute on the active media target",
+      "mode": "no-view"
+    },
+    {
+      "name": "speed-up",
+      "title": "Speed Up",
+      "description": "Increase playback speed by 0.25x",
+      "mode": "no-view"
+    },
+    {
+      "name": "speed-down",
+      "title": "Speed Down",
+      "description": "Decrease playback speed by 0.25x",
+      "mode": "no-view"
+    },
+    {
+      "name": "next-track",
+      "title": "Next Track",
+      "description": "Skip to next track",
+      "mode": "no-view"
+    },
+    {
+      "name": "prev-track",
+      "title": "Previous Track",
+      "description": "Go to previous track",
+      "mode": "no-view"
+    },
+    {
+      "name": "fullscreen",
+      "title": "Fullscreen",
+      "description": "Toggle fullscreen on the active media target",
+      "mode": "no-view"
+    },
+    {
+      "name": "status",
+      "title": "Now Playing",
+      "description": "Show current media status — title, position, speed, volume",
+      "mode": "view"
+    },
+    {
+      "name": "set-target",
+      "title": "Set Remote Target",
+      "description": "Lock remote commands to a specific app (YouTube, Spotify, etc.) or set to auto-detect",
+      "mode": "view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.83.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.11",
+    "@types/node": "20.8.10",
+    "@types/react": "18.3.3",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.4.5"
+  },
+  "scripts": {
+    "build": "ray build --skip-types -e dist -o dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "prepublishOnly": "echo \"\\n\\nIt seems like you are trying to publish the Raycast extension to npm.\\n\\nIf you did intend to publish it to npm, remove the \\`prepublishOnly\\` script and rerun \\`npm publish\\` again.\\nIf you wanted to publish it to the Raycast Store instead, use \\`npm run publish\\` instead.\\n\\n\" && exit 1",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}

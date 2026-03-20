@@ -1,0 +1,49 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "contextual-cheatsheet",
+  "title": "Contextual Cheatsheet",
+  "description": "Show keybindings and cheatsheets for the currently focused app. Configurable per-app URLs or local markdown from your flote-vault.",
+  "icon": "extension-icon.png",
+  "author": "loudog",
+  "categories": ["Productivity", "Developer Tools"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "show-cheatsheet",
+      "title": "Show Cheatsheet",
+      "description": "Show the cheatsheet for the currently focused app",
+      "mode": "view"
+    },
+    {
+      "name": "set-cheatsheet",
+      "title": "Set Cheatsheet URL",
+      "description": "Set a custom cheatsheet URL for the currently focused app",
+      "mode": "view"
+    },
+    {
+      "name": "manage-cheatsheets",
+      "title": "Manage Cheatsheets",
+      "description": "View and edit all configured app cheatsheets",
+      "mode": "view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.83.0",
+    "@raycast/utils": "^1.17.0",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.11",
+    "@types/node": "20.8.10",
+    "@types/react": "18.3.3",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.4.5"
+  },
+  "scripts": {
+    "build": "ray build --skip-types -e dist -o dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint"
+  }
+}
