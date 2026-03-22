@@ -159,6 +159,40 @@ git pull
 
 Raycast script commands auto-reload. Extensions need `npm run dev` after pulling if there were source changes.
 
+### Setting Up Custom Extensions on a New Machine
+
+**Important:** `git pull` alone does NOT make custom extensions available in Raycast. Dev extensions must be explicitly built and registered per machine. This is a Raycast security/trust boundary — extensions get system access, so they require local registration.
+
+**First-time setup (once per machine):**
+
+```bash
+# 1. Ensure the ray CLI is installed globally
+npm install -g @raycast/api
+
+# 2. For each custom extension, install deps and register with Raycast
+cd ~/code/raycast/extensions/RoamResearch  # (or any extension directory)
+npm install
+ray develop    # Builds the extension and registers it with Raycast
+```
+
+**What each step does:**
+- `npm install` — installs Node dependencies (node_modules is gitignored)
+- `ray develop` — compiles TypeScript, generates type definitions, and registers the extension with Raycast via deeplink. Runs as a dev server with hot reload. Works headlessly (no interactive UI needed).
+
+**After pulling changes to an existing extension:**
+
+```bash
+cd ~/code/raycast/extensions/{name}
+npm install    # In case new deps were added
+ray develop    # Rebuild and re-register
+```
+
+**Persistence note:** `ray develop` runs as a long-lived process. If the process dies (e.g., terminal closes), the extension *may* disappear from Raycast. If this happens, just run `ray develop` again. Alternatively, `ray build` does a one-time build without staying alive.
+
+**How to verify an extension is registered:**
+- Check if its deeplink works: `open "raycast://extensions/loudog/{extension-name}/{command}"`
+- Or open Raycast and search for the extension's commands
+
 ### What Raycast References
 
 - **Extensions:** Imported individually via Raycast > Extensions > Add Extension (+ button) > point to the extension subdirectory

@@ -1,0 +1,98 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "beads",
+  "title": "Beads",
+  "description": "Mission control for Beads issue tracking — see ready work, create issues, and manage your agentic coding workflow across all projects",
+  "icon": "extension-icon.png",
+  "author": "loudog",
+  "categories": ["Productivity", "Developer Tools"],
+  "license": "MIT",
+  "preferences": [
+    {
+      "name": "scanDirectories",
+      "type": "textfield",
+      "required": false,
+      "title": "Project Directories",
+      "description": "Comma-separated paths to scan for beads-enabled projects (default: ~/code)",
+      "default": "~/code"
+    },
+    {
+      "name": "defaultEditor",
+      "type": "dropdown",
+      "required": false,
+      "title": "Open Projects In",
+      "description": "Which editor to open projects in",
+      "default": "cursor",
+      "data": [
+        { "title": "VS Code", "value": "code" },
+        { "title": "Cursor", "value": "cursor" },
+        { "title": "Terminal", "value": "terminal" },
+        { "title": "Finder", "value": "finder" }
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "name": "beads-dashboard",
+      "title": "Beads Dashboard",
+      "subtitle": "Beads",
+      "description": "Cross-project mission control — see ready work, in-progress, blocked, and recently closed issues",
+      "mode": "view"
+    },
+    {
+      "name": "beads-create",
+      "title": "Create Bead",
+      "subtitle": "Beads",
+      "description": "File a new issue in any beads-enabled project with type, priority, and dependencies",
+      "mode": "view"
+    },
+    {
+      "name": "beads-whats-next",
+      "title": "What's Next?",
+      "subtitle": "Beads",
+      "description": "Instantly see and copy the highest priority ready issue across all projects",
+      "mode": "no-view"
+    },
+    {
+      "name": "beads-search",
+      "title": "Search Beads",
+      "subtitle": "Beads",
+      "description": "Full-text search across all beads-enabled projects",
+      "mode": "view"
+    },
+    {
+      "name": "beads-project",
+      "title": "Project Overview",
+      "subtitle": "Beads",
+      "description": "Deep dive into a single project — status, epics, stats, and health",
+      "mode": "view"
+    },
+    {
+      "name": "beads-menu-bar",
+      "title": "Beads Status",
+      "subtitle": "Beads",
+      "description": "Menu bar indicator showing ready work count across all projects",
+      "mode": "menu-bar",
+      "interval": "10m"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.104.0",
+    "@raycast/utils": "^2.2.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.11",
+    "@types/node": "22.x",
+    "@types/react": "19.x",
+    "eslint": "^9.0.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.8.0"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}
