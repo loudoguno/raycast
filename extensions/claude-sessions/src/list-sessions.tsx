@@ -5,6 +5,7 @@ import {
   Icon,
   Color,
   closeMainWindow,
+  showHUD,
 } from "@raycast/api";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { execSync } from "child_process";
@@ -276,17 +277,8 @@ function matchSession(
   const cwdMatches = sessions.filter((s) => s.cwd === processCwd);
   if (cwdMatches.length === 1) return cwdMatches[0];
   if (cwdMatches.length > 1) {
-    // Multiple sessions in same CWD — pick closest birth time to process start
-    let best: JsonlSessionInfo | null = null;
-    let bestDiff = Infinity;
-    for (const s of cwdMatches) {
-      const diff = Math.abs(s.birthEpoch - startEpoch);
-      if (diff < bestDiff) {
-        best = s;
-        bestDiff = diff;
-      }
-    }
-    return best;
+    // Multiple sessions in same CWD — pick most recently modified (active session)
+    return cwdMatches.sort((a, b) => b.lastModified - a.lastModified)[0];
   }
 
   // Fallback: time-based matching with wider bidirectional window
@@ -323,6 +315,35 @@ async function switchToSession(tty: string): Promise<void> {
     execSync(`osascript -e '${script.replace(/'/g, "'\\''")}'`, {
       timeout: 3000,
     });
+  } catch {
+    execSync(`open -a Terminal`, { timeout: 2000 });
+  }
+}
+
+async function connectRemoteControl(tty: string): Promise<void> {
+  await closeMainWindow();
+  const script = `
+    tell application "Terminal"
+      activate
+      set targetTTY to "${tty}"
+      repeat with w in windows
+        repeat with t in tabs of w
+          if tty of t contains targetTTY then
+            set selected tab of w to t
+            set index of w to 1
+            delay 0.3
+            tell application "System Events" to keystroke "/remote-control" & return
+            return
+          end if
+        end repeat
+      end repeat
+    end tell
+  `;
+  try {
+    execSync(`osascript -e '${script.replace(/'/g, "'\\''")}'`, {
+      timeout: 5000,
+    });
+    await showHUD("Connecting remote control...");
   } catch {
     execSync(`open -a Terminal`, { timeout: 2000 });
   }
@@ -615,6 +636,14 @@ export default function ListSessions() {
               icon={statusIcon}
               title={displayTitle}
               accessories={[
+                ...(session.remoteControlUrl
+                  ? [
+                      {
+                        icon: { source: Icon.Monitor, tintColor: Color.Purple },
+                        tooltip: "Remote Control active",
+                      },
+                    ]
+                  : []),
                 {
                   tag: {
                     value: getStatusText(session),
@@ -666,22 +695,31 @@ export default function ListSessions() {
                       />
                     )}
                   </ActionPanel.Section>
-                  {session.remoteControlUrl && (
-                    <ActionPanel.Section title="Remote Control">
-                      <Action.CopyToClipboard
-                        title="Copy Remote Control URL"
-                        content={session.remoteControlUrl}
-                        icon={Icon.Link}
+                  <ActionPanel.Section title="Remote Control">
+                    {session.remoteControlUrl ? (
+                      <>
+                        <Action.CopyToClipboard
+                          title="Copy Remote Control URL"
+                          content={session.remoteControlUrl}
+                          icon={Icon.Link}
+                          shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
+                        />
+                        <Action.CopyToClipboard
+                          title="Copy Remote Control Formatted Link"
+                          content={`[${displayTitle}](${session.remoteControlUrl})`}
+                          icon={Icon.Document}
+                          shortcut={{ modifiers: ["cmd", "opt"], key: "r" }}
+                        />
+                      </>
+                    ) : (
+                      <Action
+                        title="Connect Remote Control"
+                        icon={Icon.Monitor}
                         shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
+                        onAction={() => connectRemoteControl(session.tty)}
                       />
-                      <Action.CopyToClipboard
-                        title="Copy Remote Control Formatted Link"
-                        content={`[${displayTitle}](${session.remoteControlUrl})`}
-                        icon={Icon.Document}
-                        shortcut={{ modifiers: ["cmd", "opt"], key: "r" }}
-                      />
-                    </ActionPanel.Section>
-                  )}
+                    )}
+                  </ActionPanel.Section>
                   <ActionPanel.Section>
                     <Action
                       title="Refresh"

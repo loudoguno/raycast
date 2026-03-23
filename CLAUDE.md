@@ -217,7 +217,7 @@ extension-name/
 #### 7. Claude Sessions Extension
 - Live dashboard of all running Claude Code terminal sessions
 - Discovers sessions via `ps` (process list) + JSONL session files in `~/.claude/projects/`
-- Matches processes to sessions by CWD (via `lsof`) and time-based fallback
+- Matches processes to sessions by CWD (via `lsof`, preferring most recently modified) and time-based fallback
 - Reads Terminal.app tab titles via AppleScript for display names
 - Extracts session metadata from JSONL: summary, session name (`/rename`), last activity, remote control URL (`bridge_status`)
 - CWD fallback: scans up to 20 JSONL lines for `cwd` field, then decodes project folder name
@@ -229,14 +229,15 @@ extension-name/
 - Switch to Session — activates the Terminal tab for that session
 - Show in Finder / Open in VS Code
 - Copy Path, Copy PID, Copy Last Activity
-- Copy Remote Control URL — raw `https://claude.ai/code/session_XXX` URL (only shown when remote control is active)
+- Copy Remote Control URL — raw `https://claude.ai/code/session_XXX` URL (shown when remote control is active, with purple 📺 badge)
 - Copy Remote Control Formatted Link — markdown `[Session Name](URL)` using the session's display title
+- Connect Remote Control — for sessions without active remote control, switches to terminal and runs `/remote-control`
 
 **Key Architecture**:
 - `src/list-sessions.tsx` - Single-file extension: session discovery, JSONL parsing, process matching, and UI
 - `scanSessionFiles()` - Scans `~/.claude/projects/` for JSONL files modified within 24h
 - `getTabTitles()` - AppleScript to read Terminal.app tab custom titles by TTY
-- `matchSession()` - Matches process PIDs to JSONL sessions by CWD or time proximity (600s bidirectional window)
+- `matchSession()` - Matches process PIDs to JSONL sessions by CWD (most recently modified wins) or time proximity (600s bidirectional window)
 - `getProcessCwds()` - Batch `lsof` call to get working directories for all claude PIDs
 
 ### Technology Stack
