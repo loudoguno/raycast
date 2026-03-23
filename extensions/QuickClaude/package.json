@@ -1,0 +1,85 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "quickclaude",
+  "title": "QuickClaude",
+  "description": "Claude Code at your fingertips — quick prompts via CLI, active session management, and project navigation",
+  "icon": "command-icon.png",
+  "author": "loudog",
+  "categories": ["Developer Tools", "Productivity"],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "ask-claude",
+      "title": "Ask Claude",
+      "description": "Send a quick prompt to Claude Code using your Max subscription",
+      "mode": "view",
+      "icon": "command-icon.png",
+      "keywords": ["claude", "ai", "ask", "code", "prompt", "quick"]
+    },
+    {
+      "name": "active-sessions",
+      "title": "Active Sessions",
+      "description": "List active Claude Code terminal sessions and navigate to them",
+      "mode": "view",
+      "icon": "command-icon.png",
+      "keywords": ["sessions", "terminal", "active", "claude", "running"]
+    }
+  ],
+  "preferences": [
+    {
+      "name": "defaultModel",
+      "title": "Default Model",
+      "description": "The default Claude model to use for prompts",
+      "type": "dropdown",
+      "default": "sonnet",
+      "required": false,
+      "data": [
+        { "title": "Sonnet (Balanced)", "value": "sonnet" },
+        { "title": "Opus (Most Capable)", "value": "opus" },
+        { "title": "Haiku (Fastest)", "value": "haiku" }
+      ]
+    },
+    {
+      "name": "terminalApp",
+      "title": "Terminal Application",
+      "description": "Terminal app used for Claude Code sessions",
+      "type": "dropdown",
+      "default": "Terminal",
+      "required": false,
+      "data": [
+        { "title": "Terminal", "value": "Terminal" },
+        { "title": "iTerm", "value": "iTerm" },
+        { "title": "Warp", "value": "Warp" },
+        { "title": "Kitty", "value": "kitty" },
+        { "title": "Ghostty", "value": "Ghostty" }
+      ]
+    },
+    {
+      "name": "claudeCodePath",
+      "title": "Claude Code Path",
+      "description": "Path to the claude CLI binary (leave empty for auto-detection)",
+      "type": "textfield",
+      "required": false
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.83.0",
+    "@raycast/utils": "^1.17.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.11",
+    "@types/node": "20.8.10",
+    "@types/react": "18.3.3",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.4.5"
+  },
+  "scripts": {
+    "build": "ray build --skip-types -e dist -o dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  },
+  "platforms": ["macOS"]
+}
