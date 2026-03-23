@@ -30,6 +30,7 @@ interface ClaudeSession {
   lastTool: string | null;
   isWaitingForUser: boolean;
   lastModified: number;
+  remoteControlUrl: string | null;
 }
 
 interface JsonlSessionInfo {
@@ -42,6 +43,7 @@ interface JsonlSessionInfo {
   lastActivity: string | null;
   lastTool: string | null;
   isWaitingForUser: boolean;
+  remoteControlUrl: string | null;
 }
 
 /**
@@ -150,6 +152,7 @@ function scanSessionFiles(): JsonlSessionInfo[] {
           let lastActivity: string | null = null;
           let lastTool: string | null = null;
           let isWaitingForUser = false;
+          let remoteControlUrl: string | null = null;
 
           for (const line of lines) {
             if (!line.trim()) continue;
@@ -166,6 +169,11 @@ function scanSessionFiles(): JsonlSessionInfo[] {
                 if (renameMatch && renameMatch[1]) {
                   sessionName = renameMatch[1].trim();
                 }
+              }
+
+              // Extract remote control URL from bridge_status
+              if (t === "system" && obj.subtype === "bridge_status" && obj.url) {
+                remoteControlUrl = obj.url;
               }
 
               if (t === "user" && obj.message?.role === "user") {
@@ -219,6 +227,7 @@ function scanSessionFiles(): JsonlSessionInfo[] {
             lastActivity,
             lastTool,
             isWaitingForUser,
+            remoteControlUrl,
           });
         } catch {
           continue;
@@ -386,6 +395,7 @@ function getClaudeSessions(): ClaudeSession[] {
     const lastTool = matched?.lastTool || null;
     const isWaitingForUser = matched?.isWaitingForUser ?? false;
     const lastModified = matched?.lastModified ?? 0;
+    const remoteControlUrl = matched?.remoteControlUrl || null;
 
     // Tab title from Terminal.app
     const tabTitle = tabTitles[tty] || null;
@@ -439,6 +449,7 @@ function getClaudeSessions(): ClaudeSession[] {
       lastTool,
       isWaitingForUser,
       lastModified,
+      remoteControlUrl,
     });
   }
 
@@ -655,6 +666,22 @@ export default function ListSessions() {
                       />
                     )}
                   </ActionPanel.Section>
+                  {session.remoteControlUrl && (
+                    <ActionPanel.Section title="Remote Control">
+                      <Action.CopyToClipboard
+                        title="Copy Remote Control URL"
+                        content={session.remoteControlUrl}
+                        icon={Icon.Link}
+                        shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
+                      />
+                      <Action.CopyToClipboard
+                        title="Copy Remote Control Formatted Link"
+                        content={`[${displayTitle}](${session.remoteControlUrl})`}
+                        icon={Icon.Document}
+                        shortcut={{ modifiers: ["cmd", "opt"], key: "r" }}
+                      />
+                    </ActionPanel.Section>
+                  )}
                   <ActionPanel.Section>
                     <Action
                       title="Refresh"

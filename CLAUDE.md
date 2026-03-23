@@ -6,13 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a personal collection of custom Raycast extensions for macOS. The repository contains five distinct extensions:
+This is a personal collection of custom Raycast extensions for macOS. The repository contains six distinct extensions:
 
 1. **Balloons** - Browser-based celebration extension with HTML/CSS animations
 2. **Balloons Fancy** - Native macOS system overlay extension with 11 visual effects (balloons, fireworks, snow, etc.)
 3. **Claude Usage** - Utility to monitor Claude AI subscription usage limits via Safari automation
-4. **OmniFocus** - Custom OmniFocus integration with "Quick Add Anywhere" task creation
-5. **RoamResearch** - Zero-friction search and preview for Roam Research knowledge graphs (custom, not a fork)
+4. **Universal Copy Link** - One-hotkey markdown link copier for 40+ macOS apps with RTF clipboard support
+5. **OmniFocus** - Custom OmniFocus integration with "Quick Add Anywhere" task creation
+6. **RoamResearch** - Zero-friction search and preview for Roam Research knowledge graphs (custom, not a fork)
+7. **Claude Sessions** - Live dashboard of all running Claude Code terminal sessions with status, context, and remote control URL support
 
 ## Common Development Commands
 
@@ -134,7 +136,29 @@ extension-name/
 - `APPLESCRIPT_QUIET` - Only reads from existing Safari tabs, never opens windows (used by menu bar background refresh)
 - `APPLESCRIPT_INTERACTIVE` - Opens Safari and creates tabs if needed (used by manual refresh)
 
-#### 4. OmniFocus Extension
+#### 4. Universal Copy Link Extension
+- **Strategy-based architecture**: Router maps bundle IDs → handler configs → execution strategies
+- Supports 40+ macOS apps via 5 strategies: browser, applescript, accessibility, menu-command, shell
+- Multi-format clipboard: writes markdown `[title](url)` as plain text, RTF hyperlink, and HTML simultaneously via NSPasteboard
+- Uses `mode: "no-view"` — background command, no UI besides HUD confirmation
+- Bundle ID alias system resolves Setapp variants, version upgrades, and MAS differences
+- Claude Code session detection: reads terminal window titles and maps to `.claude/projects/` session files
+- Accessibility fallback (AXTitle + AXDocument) for any unregistered app
+
+**Commands**:
+- `linkmark` - Copy a markdown link to the frontmost document or item
+
+**Key Architecture**:
+- `src/copy-link.tsx` - Command entry point, orchestrates routing and clipboard
+- `src/router.ts` - Gets frontmost app via NSWorkspace, resolves handler from registry
+- `src/handlers.ts` - Handler registry mapping bundle IDs to strategy configs
+- `src/aliases.ts` - Bundle ID alias resolution (Setapp, version variants)
+- `src/clipboard.ts` - Multi-format clipboard writing (markdown + RTF + HTML)
+- `src/claude-session.ts` - Claude Code session detection in terminals
+- `src/strategies/` - Strategy implementations (browser, applescript, accessibility, menu-command, shell)
+- `src/scripts/index.ts` - Inline AppleScript registry for 30+ app-specific scripts
+
+#### 5. OmniFocus Extension
 - Uses JXA (JavaScript for Automation) via `@raycast/utils` `runAppleScript` with `language: "JavaScript"`
 - Requires OmniFocus Pro (for automation/scripting access)
 - Single JXA call fetches all projects and tasks with breadcrumb hierarchy
@@ -156,7 +180,7 @@ extension-name/
 - `whose()` clauses can throw type conversion errors — prefer JS-side filtering
 - `effectivelyDropped()` may not exist in all OmniFocus versions — wrap in try/catch
 
-#### 5. RoamResearch Extension
+#### 6. RoamResearch Extension
 - **Fresh build** inspired by the official Roam Research Store extension, not a fork
 - Uses Roam Research API via user-generated API tokens (graph owner required)
 - Vendored minimal API client (`src/lib/roam-client.ts`) — strongly typed, no `any`
@@ -189,6 +213,31 @@ extension-name/
 - Roam API rate limits undocumented — uses exponential backoff
 - Graph owner must generate API tokens (collaborators cannot)
 - ESLint 9 + `@raycast/eslint-config` has upstream `@rushstack/eslint-patch` compatibility issue (lint errors are dev-only, don't affect build)
+
+#### 7. Claude Sessions Extension
+- Live dashboard of all running Claude Code terminal sessions
+- Discovers sessions via `ps` (process list) + JSONL session files in `~/.claude/projects/`
+- Matches processes to sessions by CWD (via `lsof`) and time-based fallback
+- Reads Terminal.app tab titles via AppleScript for display names
+- Extracts session metadata from JSONL: summary, session name (`/rename`), last activity, remote control URL (`bridge_status`)
+- CWD fallback: scans up to 20 JSONL lines for `cwd` field, then decodes project folder name
+
+**Commands**:
+- `list-sessions` - Dashboard with session list, status indicators (Working/Waiting/Idle), detail panel with path, branch, CPU, memory, initial prompt, and last activity
+
+**Key Actions**:
+- Switch to Session — activates the Terminal tab for that session
+- Show in Finder / Open in VS Code
+- Copy Path, Copy PID, Copy Last Activity
+- Copy Remote Control URL — raw `https://claude.ai/code/session_XXX` URL (only shown when remote control is active)
+- Copy Remote Control Formatted Link — markdown `[Session Name](URL)` using the session's display title
+
+**Key Architecture**:
+- `src/list-sessions.tsx` - Single-file extension: session discovery, JSONL parsing, process matching, and UI
+- `scanSessionFiles()` - Scans `~/.claude/projects/` for JSONL files modified within 24h
+- `getTabTitles()` - AppleScript to read Terminal.app tab custom titles by TTY
+- `matchSession()` - Matches process PIDs to JSONL sessions by CWD or time proximity (600s bidirectional window)
+- `getProcessCwds()` - Batch `lsof` call to get working directories for all claude PIDs
 
 ### Technology Stack
 
