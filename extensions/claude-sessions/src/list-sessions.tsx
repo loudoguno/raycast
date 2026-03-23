@@ -53,20 +53,24 @@ function getTabTitles(): Record<string, string> {
       `osascript -e '
 tell application "Terminal"
     set output to ""
-    repeat with w in windows
-        set tabList to tabs of w
-        repeat with t in tabList
-            try
-                set ttyPath to tty of t
-                set tabCustom to custom title of t
-                set output to output & ttyPath & "||" & tabCustom & "
+    set winCount to count of windows
+    repeat with i from 1 to winCount
+        try
+            set tabCount to count of tabs of window i
+            repeat with j from 1 to tabCount
+                try
+                    set t to tab j of window i
+                    set ttyPath to tty of t
+                    set tabCustom to custom title of t
+                    set output to output & ttyPath & "||" & tabCustom & "
 "
-            end try
-        end repeat
+                end try
+            end repeat
+        end try
     end repeat
     return output
 end tell' 2>/dev/null`,
-      { encoding: "utf-8", timeout: 3000 },
+      { encoding: "utf-8", timeout: 5000 },
     ).trim();
 
     const titles: Record<string, string> = {};
@@ -115,13 +119,26 @@ function scanSessionFiles(): JsonlSessionInfo[] {
           const content = readFileSync(filePath, "utf-8");
           const lines = content.split("\n");
 
-          // Get CWD from first line
+          // Get CWD: try first line, then scan up to 20 lines, then decode folder name
           let cwd = "";
-          try {
-            const firstObj = JSON.parse(lines[0]);
-            cwd = firstObj.cwd || "";
-          } catch {
-            continue;
+          for (let li = 0; li < Math.min(lines.length, 20); li++) {
+            if (!lines[li].trim()) continue;
+            try {
+              const obj = JSON.parse(lines[li]);
+              if (obj.cwd) {
+                cwd = obj.cwd;
+                break;
+              }
+            } catch {
+              continue;
+            }
+          }
+          // Fallback: decode project folder name (e.g. "-Users-loudog-code-raycast" → "/Users/loudog/code/raycast")
+          if (!cwd) {
+            const decoded = projectFolder.replace(/^-/, "/").replace(/-/g, "/");
+            if (existsSync(decoded)) {
+              cwd = decoded;
+            }
           }
           if (!cwd) continue;
 
@@ -263,12 +280,12 @@ function matchSession(
     return best;
   }
 
-  // Fallback: time-based matching with wider window (JSONL created after process starts)
+  // Fallback: time-based matching with wider bidirectional window
   let best: JsonlSessionInfo | null = null;
   let bestDiff = Infinity;
   for (const s of sessions) {
-    const diff = s.birthEpoch - startEpoch;
-    if (diff >= 0 && diff < 300 && diff < bestDiff) {
+    const diff = Math.abs(s.birthEpoch - startEpoch);
+    if (diff < 600 && diff < bestDiff) {
       best = s;
       bestDiff = diff;
     }
