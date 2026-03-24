@@ -1,0 +1,39 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "universal-copy-link",
+  "title": "Universal Copy Link",
+  "description": "One hotkey, any app: copy a markdown [title](url) link to the frontmost document, page, or item — with RTF hyperlink on the clipboard too.",
+  "icon": "command-icon.png",
+  "author": "loudog",
+  "categories": [
+    "Productivity"
+  ],
+  "license": "MIT",
+  "commands": [
+    {
+      "name": "copy-link",
+      "title": "Copy Link",
+      "description": "Copy a markdown link to the frontmost document or item",
+      "mode": "no-view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.83.2",
+    "@raycast/utils": "^1.17.0"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.11",
+    "@types/node": "20.8.10",
+    "@types/react": "18.3.3",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
+  },
+  "scripts": {
+    "build": "ray build -e dist",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}
