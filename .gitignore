@@ -33,3 +33,6 @@ tmp/
 MEMORY/
 
 *.db
+
+# Personal workspace (per-machine, backed up by NAS)
+lous-workspace/

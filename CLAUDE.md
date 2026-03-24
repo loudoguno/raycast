@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a personal collection of custom Raycast extensions for macOS. The repository contains six distinct extensions:
+This is a personal collection of custom Raycast extensions for macOS. The repository contains these custom extensions:
 
 1. **Balloons** - Browser-based celebration extension with HTML/CSS animations
 2. **Balloons Fancy** - Native macOS system overlay extension with 11 visual effects (balloons, fireworks, snow, etc.)
@@ -15,6 +15,7 @@ This is a personal collection of custom Raycast extensions for macOS. The reposi
 5. **OmniFocus** - Custom OmniFocus integration with "Quick Add Anywhere" task creation
 6. **RoamResearch** - Zero-friction search and preview for Roam Research knowledge graphs (custom, not a fork)
 7. **Claude Sessions** - Live dashboard of all running Claude Code terminal sessions with status, context, and remote control URL support
+8. **Search Status Menu** - Keyboard-driven search and click for macOS menubar/status items via Swift helper + Accessibility API
 
 ## Common Development Commands
 
@@ -239,6 +240,27 @@ extension-name/
 - `getTabTitles()` - AppleScript to read Terminal.app tab custom titles by TTY
 - `matchSession()` - Matches process PIDs to JSONL sessions by CWD (most recently modified wins) or time proximity (600s bidirectional window)
 - `getProcessCwds()` - Batch `lsof` call to get working directories for all claude PIDs
+
+#### 8. Search Status Menu Extension
+- Keyboard-driven search and click for macOS status menu (menubar) items
+- **Hybrid architecture**: TypeScript extension + native Swift CLI helper binary
+- Swift helper enumerates menu bar items via Accessibility API (`AXExtrasMenuBar`), outputs JSON
+- Click actions use CGEvent posting at item position coordinates
+- Deduplicates items with identical title + bundleId, keeping highest X position
+- Accessibility permission check with guided setup UI if denied
+
+**Commands**:
+- `search-status-menu` - List view of all status items, fuzzy searchable, Return = left-click, Cmd+Return = right-click
+
+**Key Architecture**:
+- `src/search-status-menu.tsx` - Main command: List UI with app icon resolution, deduplication, click dispatch
+- `src/lib/scanner.ts` - Calls Swift helper binary from `assets/`, parses JSON output
+- `src/lib/clicker.ts` - Click dispatch via Swift helper (`click X Y left|right`)
+- `src/lib/types.ts` - MenuBarItem and ScanResult interfaces
+- `swift-helper/main.swift` - Native Swift binary: AX API scan + CGEvent click
+- `swift-helper/build.sh` - Compiles Swift helper via `swiftc`
+
+**Setup**: Swift helper must be compiled per machine: `cd swift-helper && ./build.sh`, then copy binary to `assets/status-menu-helper`
 
 ### Technology Stack
 

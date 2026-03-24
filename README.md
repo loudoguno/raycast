@@ -14,11 +14,19 @@ Personal Raycast customization system: extensions, scripts, snippets, and assets
 ```
 ~/code/raycast/
 ├── extensions/        # Raycast extensions (TypeScript/React, some with Swift/AppleScript)
-│   ├── balloons/          5 custom extensions
+│   ├── balloons/          13 custom extensions
 │   ├── balloons-fancy/
+│   ├── beads/
 │   ├── claude-built/
+│   ├── claude-sessions/
 │   ├── claude-usage/
+│   ├── contextual-cheatsheet/
 │   ├── finder-actions/
+│   ├── loutools/
+│   ├── omnifocus/
+│   ├── RoamResearch/
+│   ├── Search_Status_Menu/
+│   ├── universal-copy-link/
 │   ├── docs/              Development reference docs
 │   ├── templates/         hello-world starter templates (detail, form, list)
 │   └── instructions.md   Extension development guide
@@ -41,9 +49,17 @@ Personal Raycast customization system: extensions, scripts, snippets, and assets
 |-----------|----------|------------|-------------|
 | **balloons** | 1 | TypeScript | Browser-based balloon celebration (30 balloons, 8 colors, 8s) |
 | **balloons-fancy** | 11 | TypeScript + Swift/SwiftUI | Native macOS overlay effects (50-700 particles, 24 colors, 11 effects) |
+| **beads** | — | TypeScript | Raycast integration for beads issue tracker |
 | **claude-built** | 1 | TypeScript | Unified palette for all Claude-built skills, tools, scripts, and aliases |
+| **claude-sessions** | 1 | TypeScript + AppleScript | Live dashboard of running Claude Code terminal sessions with status and remote control |
 | **claude-usage** | 5 | TypeScript + AppleScript | Claude subscription usage monitoring + daily/weekly/monthly productivity summaries |
+| **contextual-cheatsheet** | — | TypeScript | Context-aware keyboard shortcut cheatsheets |
 | **finder-actions** | 1 | TypeScript | Action palette for frontmost Finder window (open in terminal, etc.) |
+| **loutools** | — | TypeScript | Personal utilities and tools collection |
+| **omnifocus** | 1 | TypeScript + JXA | Quick Add Anywhere — fuzzy search projects/tasks, create with tags, due, repeat, flag |
+| **RoamResearch** | 4 | TypeScript | Zero-friction search and preview for Roam Research knowledge graphs |
+| **Search_Status_Menu** | 1 | TypeScript + Swift | Keyboard-driven search and click for macOS menubar items via Accessibility API |
+| **universal-copy-link** | 1 | TypeScript + AppleScript | One hotkey, any app: copy markdown [title](url) link with RTF — supports 40+ apps |
 
 ### balloons-fancy Effects
 
