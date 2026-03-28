@@ -108,7 +108,7 @@ export default function ReviewComplete() {
                   />
                 ) : null}
                 <Action
-                  title="Revisit (Move to Outbox)"
+                  title="Revisit (move to Outbox)"
                   icon={Icon.ArrowRight}
                   onAction={async () => {
                     moveToOutbox(p);

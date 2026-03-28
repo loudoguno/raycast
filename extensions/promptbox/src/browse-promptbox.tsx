@@ -6,7 +6,6 @@ import {
   Action,
   showToast,
   Toast,
-  Keyboard,
   confirmAlert,
   Alert,
 } from "@raycast/api";
