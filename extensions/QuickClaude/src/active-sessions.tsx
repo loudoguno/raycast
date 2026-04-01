@@ -45,10 +45,17 @@ interface SessionInfo {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function ActiveSessions() {
-  const { data: sessions, isLoading, revalidate } = usePromise(discoverSessions);
+  const {
+    data: sessions,
+    isLoading,
+    revalidate,
+  } = usePromise(discoverSessions);
 
   return (
-    <List isLoading={isLoading} searchBarPlaceholder="Search active Claude sessions...">
+    <List
+      isLoading={isLoading}
+      searchBarPlaceholder="Search active Claude sessions..."
+    >
       {!sessions || sessions.length === 0 ? (
         <List.EmptyView
           title="No Active Claude Sessions"
@@ -60,26 +67,59 @@ export default function ActiveSessions() {
           <List.Item
             key={s.process.pid}
             title={getSessionTitle(s)}
-            subtitle={s.summary || s.process.cwd ? shortenPath(s.process.cwd || "") : undefined}
+            subtitle={
+              s.summary || s.process.cwd
+                ? shortenPath(s.process.cwd || "")
+                : undefined
+            }
             icon={getStatusIcon(s)}
             accessories={getAccessories(s)}
             actions={
               <ActionPanel>
-                <Action title="Switch to Session" icon={Icon.Terminal} onAction={() => switchToSession(s)} />
-                <Action.Push title="View Details" icon={Icon.Eye} target={<SessionDetail session={s} />} />
+                <Action
+                  title="Switch to Session"
+                  icon={Icon.Terminal}
+                  onAction={() => switchToSession(s)}
+                />
+                <Action.Push
+                  title="View Details"
+                  icon={Icon.Eye}
+                  target={<SessionDetail session={s} />}
+                />
                 {s.sessionId && (
-                  <Action.CopyToClipboard title="Copy Session ID" content={s.sessionId} shortcut={{ modifiers: ["cmd"], key: "i" }} />
+                  <Action.CopyToClipboard
+                    title="Copy Session ID"
+                    content={s.sessionId}
+                    shortcut={{ modifiers: ["cmd"], key: "i" }}
+                  />
                 )}
                 {s.sessionName && (
-                  <Action.CopyToClipboard title="Copy Session Name" content={s.sessionName} shortcut={{ modifiers: ["cmd"], key: "n" }} />
+                  <Action.CopyToClipboard
+                    title="Copy Session Name"
+                    content={s.sessionName}
+                    shortcut={{ modifiers: ["cmd"], key: "n" }}
+                  />
                 )}
                 {s.remoteControlUrl && (
-                  <Action.CopyToClipboard title="Copy Remote Control URL" content={s.remoteControlUrl} shortcut={{ modifiers: ["cmd"], key: "u" }} />
+                  <Action.CopyToClipboard
+                    title="Copy Remote Control URL"
+                    content={s.remoteControlUrl}
+                    shortcut={{ modifiers: ["cmd"], key: "u" }}
+                  />
                 )}
                 {s.process.cwd && (
-                  <Action.CopyToClipboard title="Copy Working Directory" content={s.process.cwd} shortcut={{ modifiers: ["cmd", "shift"], key: "c" }} />
+                  <Action.CopyToClipboard
+                    title="Copy Working Directory"
+                    content={s.process.cwd}
+                    shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+                  />
                 )}
-                <Action title="Refresh" icon={Icon.ArrowClockwise} onAction={revalidate} shortcut={{ modifiers: ["cmd"], key: "r" }} />
+                <Action
+                  title="Refresh"
+                  icon={Icon.ArrowClockwise}
+                  onAction={revalidate}
+                  shortcut={{ modifiers: ["cmd"], key: "r" }}
+                />
               </ActionPanel>
             }
           />
@@ -114,24 +154,48 @@ function SessionDetail({ session: s }: { session: SessionInfo }) {
   lines.push(`| PID | \`${s.process.pid}\` |`);
   if (s.sessionId) lines.push(`| Session ID | \`${s.sessionId}\` |`);
   if (s.sessionName) lines.push(`| Session Name | ${s.sessionName} |`);
-  if (s.process.cwd) lines.push(`| Directory | \`${shortenPath(s.process.cwd)}\` |`);
-  if (s.gitBranch) lines.push(`| Branch | \`${s.gitBranch}\` ${s.hasRemote ? "☁️" : ""} |`);
+  if (s.process.cwd)
+    lines.push(`| Directory | \`${shortenPath(s.process.cwd)}\` |`);
+  if (s.gitBranch)
+    lines.push(`| Branch | \`${s.gitBranch}\` ${s.hasRemote ? "☁️" : ""} |`);
   lines.push(`| CPU | ${s.process.cpu}% |`);
   lines.push(`| Memory | ${s.process.mem} KB |`);
   lines.push(`| Started | ${s.process.startTime} |`);
-  lines.push(`| Status | ${s.isWaitingForUser ? "⏳ Waiting for input" : "🔄 Working"} |`);
+  lines.push(
+    `| Status | ${s.isWaitingForUser ? "⏳ Waiting for input" : "🔄 Working"} |`,
+  );
   if (s.lastTool) lines.push(`| Last Tool | \`${s.lastTool}\` |`);
-  if (s.remoteControlUrl) lines.push(`| Remote Control | \`${s.remoteControlUrl}\` |`);
+  if (s.remoteControlUrl)
+    lines.push(`| Remote Control | \`${s.remoteControlUrl}\` |`);
 
   return (
     <Detail
       markdown={lines.join("\n")}
       actions={
         <ActionPanel>
-          <Action title="Switch to Session" icon={Icon.Terminal} onAction={() => switchToSession(s)} />
-          {s.sessionId && <Action.CopyToClipboard title="Copy Session ID" content={s.sessionId} />}
-          {s.sessionName && <Action.CopyToClipboard title="Copy Session Name" content={s.sessionName} />}
-          {s.remoteControlUrl && <Action.CopyToClipboard title="Copy Remote Control URL" content={s.remoteControlUrl} />}
+          <Action
+            title="Switch to Session"
+            icon={Icon.Terminal}
+            onAction={() => switchToSession(s)}
+          />
+          {s.sessionId && (
+            <Action.CopyToClipboard
+              title="Copy Session ID"
+              content={s.sessionId}
+            />
+          )}
+          {s.sessionName && (
+            <Action.CopyToClipboard
+              title="Copy Session Name"
+              content={s.sessionName}
+            />
+          )}
+          {s.remoteControlUrl && (
+            <Action.CopyToClipboard
+              title="Copy Remote Control URL"
+              content={s.remoteControlUrl}
+            />
+          )}
         </ActionPanel>
       }
     />
@@ -163,12 +227,16 @@ async function discoverSessions(): Promise<SessionInfo[]> {
 
 async function findClaudeProcesses(): Promise<ClaudeProcess[]> {
   try {
-    const output = await runCmd("ps -eo pid,tty,pcpu,rss,lstart,args | grep -E '[c]laude' | grep -v 'Claude.app\\|Claude Helper\\|ray develop\\|esbuild\\|grep'");
+    const output = await runCmd(
+      "ps -eo pid,tty,pcpu,rss,lstart,args | grep -E '[c]laude' | grep -v 'Claude.app\\|Claude Helper\\|ray develop\\|esbuild\\|grep'",
+    );
     const lines = output.split("\n").filter(Boolean);
     const processes: ClaudeProcess[] = [];
 
     for (const line of lines) {
-      const match = line.match(/^\s*(\d+)\s+(\S+)\s+(\S+)\s+(\d+)\s+(.{24})\s+(.+)$/);
+      const match = line.match(
+        /^\s*(\d+)\s+(\S+)\s+(\S+)\s+(\d+)\s+(.{24})\s+(.+)$/,
+      );
       if (!match) continue;
 
       const tty = match[2];
@@ -225,7 +293,9 @@ async function getTerminalTabTitles(): Promise<Map<string, string>> {
   end repeat
   return tabList as text
 end tell`;
-    const output = await runCmd(`osascript -e '${script.replace(/'/g, "'\"'\"'")}'`);
+    const output = await runCmd(
+      `osascript -e '${script.replace(/'/g, "'\"'\"'")}'`,
+    );
     for (const entry of output.split(", ")) {
       const [tty, title] = entry.split("|||");
       if (tty && title) {
@@ -240,7 +310,10 @@ end tell`;
   return map;
 }
 
-async function buildSessionInfo(proc: ClaudeProcess, tabMap: Map<string, string>): Promise<SessionInfo> {
+async function buildSessionInfo(
+  proc: ClaudeProcess,
+  tabMap: Map<string, string>,
+): Promise<SessionInfo> {
   const session: SessionInfo = {
     process: proc,
     isWaitingForUser: false,
@@ -253,11 +326,18 @@ async function buildSessionInfo(proc: ClaudeProcess, tabMap: Map<string, string>
     try {
       const gitDir = path.join(proc.cwd, ".git");
       if (fs.existsSync(gitDir)) {
-        session.gitBranch = execSync(`git -C "${proc.cwd}" branch --show-current 2>/dev/null`, { encoding: "utf-8" }).trim();
-        const remote = execSync(`git -C "${proc.cwd}" remote 2>/dev/null`, { encoding: "utf-8" }).trim();
+        session.gitBranch = execSync(
+          `git -C "${proc.cwd}" branch --show-current 2>/dev/null`,
+          { encoding: "utf-8" },
+        ).trim();
+        const remote = execSync(`git -C "${proc.cwd}" remote 2>/dev/null`, {
+          encoding: "utf-8",
+        }).trim();
         session.hasRemote = !!remote;
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   // Match to JSONL session file
@@ -268,7 +348,10 @@ async function buildSessionInfo(proc: ClaudeProcess, tabMap: Map<string, string>
   return session;
 }
 
-async function matchSessionData(proc: ClaudeProcess, session: SessionInfo): Promise<void> {
+async function matchSessionData(
+  proc: ClaudeProcess,
+  session: SessionInfo,
+): Promise<void> {
   const claudeProjectsDir = path.join(homedir(), ".claude", "projects");
   if (!fs.existsSync(claudeProjectsDir)) return;
 
@@ -308,7 +391,9 @@ async function matchSessionData(proc: ClaudeProcess, session: SessionInfo): Prom
         return;
       }
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 interface ParsedSession {
@@ -320,7 +405,10 @@ interface ParsedSession {
   remoteControlUrl?: string;
 }
 
-function parseJsonlSession(filePath: string, expectedCwd: string): ParsedSession | null {
+function parseJsonlSession(
+  filePath: string,
+  expectedCwd: string,
+): ParsedSession | null {
   try {
     const content = fs.readFileSync(filePath, "utf-8");
     const lines = content.split("\n").filter(Boolean);
@@ -350,18 +438,23 @@ function parseJsonlSession(filePath: string, expectedCwd: string): ParsedSession
         if (entry.type === "system" && entry.subtype === "local_command") {
           const content = entry.content || "";
           if (content.includes("/rename")) {
-            const argsMatch = content.match(/<command-args>(.*?)<\/command-args>/);
+            const argsMatch = content.match(
+              /<command-args>(.*?)<\/command-args>/,
+            );
             if (argsMatch) sessionName = argsMatch[1];
           }
         }
 
         // First user message as summary
         if (!summary && entry.type === "user" && entry.message?.content) {
-          const text = typeof entry.message.content === "string"
-            ? entry.message.content
-            : Array.isArray(entry.message.content)
-              ? entry.message.content.find((b: { type: string }) => b.type === "text")?.text
-              : undefined;
+          const text =
+            typeof entry.message.content === "string"
+              ? entry.message.content
+              : Array.isArray(entry.message.content)
+                ? entry.message.content.find(
+                    (b: { type: string }) => b.type === "text",
+                  )?.text
+                : undefined;
           if (text) {
             summary = text.slice(0, 120);
           }
@@ -369,7 +462,9 @@ function parseJsonlSession(filePath: string, expectedCwd: string): ParsedSession
 
         // Last assistant activity
         if (entry.type === "assistant" && entry.message?.content) {
-          const blocks = Array.isArray(entry.message.content) ? entry.message.content : [];
+          const blocks = Array.isArray(entry.message.content)
+            ? entry.message.content
+            : [];
           for (const block of blocks) {
             if (block.type === "text" && block.text) {
               lastActivity = block.text.slice(0, 200);
@@ -394,13 +489,22 @@ function parseJsonlSession(filePath: string, expectedCwd: string): ParsedSession
         if (entry.remoteControlUrl) {
           remoteControlUrl = entry.remoteControlUrl;
         }
-      } catch { /* skip malformed lines */ }
+      } catch {
+        /* skip malformed lines */
+      }
     }
 
     // Only return if CWD matched (or wasn't set)
     if (cwd && cwd !== expectedCwd) return null;
 
-    return { sessionName, summary, lastActivity, lastTool, isWaitingForUser, remoteControlUrl };
+    return {
+      sessionName,
+      summary,
+      lastActivity,
+      lastTool,
+      isWaitingForUser,
+      remoteControlUrl,
+    };
   } catch {
     return null;
   }
@@ -417,8 +521,10 @@ function getSessionTitle(s: SessionInfo): string {
 
 function getStatusIcon(s: SessionInfo): { source: Icon; tintColor: Color } {
   const cpuVal = parseFloat(s.process.cpu);
-  if (cpuVal > 50) return { source: Icon.CircleFilled, tintColor: Color.Orange };
-  if (s.isWaitingForUser) return { source: Icon.CircleFilled, tintColor: Color.Blue };
+  if (cpuVal > 50)
+    return { source: Icon.CircleFilled, tintColor: Color.Orange };
+  if (s.isWaitingForUser)
+    return { source: Icon.CircleFilled, tintColor: Color.Blue };
   return { source: Icon.CircleFilled, tintColor: Color.Green };
 }
 
@@ -468,7 +574,9 @@ async function switchToSession(session: SessionInfo) {
   return "not found"
 end tell`;
 
-    const result = await runCmd(`osascript -e '${script.replace(/'/g, "'\"'\"'")}'`);
+    const result = await runCmd(
+      `osascript -e '${script.replace(/'/g, "'\"'\"'")}'`,
+    );
     if (result.includes("found")) {
       return;
     }
@@ -476,7 +584,10 @@ end tell`;
     // Fallback: just activate Terminal
     await runCmd(`osascript -e 'tell application "Terminal" to activate'`);
   } catch {
-    await showToast({ style: Toast.Style.Failure, title: "Could not switch to session" });
+    await showToast({
+      style: Toast.Style.Failure,
+      title: "Could not switch to session",
+    });
   }
 }
 

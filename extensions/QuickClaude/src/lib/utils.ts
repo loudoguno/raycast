@@ -56,10 +56,16 @@ export function findClaudePath(): string | null {
 
   // Try which
   try {
-    const result = execSync("which claude 2>/dev/null || command -v claude 2>/dev/null", {
-      encoding: "utf-8",
-      env: { ...process.env, PATH: `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin:${homedir()}/.claude/local` },
-    }).trim();
+    const result = execSync(
+      "which claude 2>/dev/null || command -v claude 2>/dev/null",
+      {
+        encoding: "utf-8",
+        env: {
+          ...process.env,
+          PATH: `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin:${homedir()}/.claude/local`,
+        },
+      },
+    ).trim();
     if (result) return result;
   } catch {
     // not found
@@ -73,13 +79,23 @@ export function findClaudePath(): string | null {
  */
 export function runCommand(cmd: string, timeout = 10000): Promise<string> {
   return new Promise((resolve, reject) => {
-    exec(cmd, { timeout, env: { ...process.env, PATH: `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin` } }, (err, stdout, stderr) => {
-      if (err) {
-        reject(new Error(stderr || err.message));
-      } else {
-        resolve(stdout.trim());
-      }
-    });
+    exec(
+      cmd,
+      {
+        timeout,
+        env: {
+          ...process.env,
+          PATH: `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin`,
+        },
+      },
+      (err, stdout, stderr) => {
+        if (err) {
+          reject(new Error(stderr || err.message));
+        } else {
+          resolve(stdout.trim());
+        }
+      },
+    );
   });
 }
 
