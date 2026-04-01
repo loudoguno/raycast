@@ -12,7 +12,7 @@ import {
   environment,
 } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { exec } from "child_process";
 import { homedir } from "os";
 import path from "path";
@@ -27,12 +27,12 @@ import {
   loadProjects,
   touchProject,
   addProject,
-  StoredProject,
+  removeProject,
 } from "./lib/project-store";
 
 interface Preferences {
   defaultModel?: string;
-  claudeCodePath?: string;
+  terminalApp?: string;
 }
 
 // ─── Main entry point ────────────────────────────────────────────────────────
@@ -91,13 +91,26 @@ function AskClaudeForm({ claudePath }: { claudePath: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [manualPath, setManualPath] = useState("");
   const [showManualPath, setShowManualPath] = useState(false);
-  const filePickerPaths = useRef<string[]>([]);
 
   const { data: projects, revalidate: reloadProjects } =
     usePromise(loadProjects);
 
+  // Detect duplicate basenames to show parent path for disambiguation
+  const nameCount = new Map<string, number>();
+  for (const p of projects || []) {
+    const name = projectName(p.path);
+    nameCount.set(name, (nameCount.get(name) || 0) + 1);
+  }
+
+  function displayTitle(projectPath: string): string {
+    const name = projectName(projectPath);
+    if ((nameCount.get(name) || 0) > 1) {
+      return `${name}  —  ${shortenPath(projectPath)}`;
+    }
+    return name;
+  }
+
   async function handleAddFromPicker(paths: string[]) {
-    filePickerPaths.current = paths;
     if (paths.length > 0) {
       const picked = paths[0];
       await addProject(picked);
@@ -138,6 +151,17 @@ function AskClaudeForm({ claudePath }: { claudePath: string }) {
     });
   }
 
+  async function handleRemoveProject() {
+    if (!selectedProject) return;
+    await removeProject(selectedProject);
+    setSelectedProject("");
+    reloadProjects();
+    await showToast({
+      style: Toast.Style.Success,
+      title: "Project removed",
+    });
+  }
+
   async function handleSubmit() {
     if (!prompt.trim()) {
       await showToast({
@@ -149,11 +173,9 @@ function AskClaudeForm({ claudePath }: { claudePath: string }) {
 
     const projectPath = selectedProject
       ? expandTilde(selectedProject)
-      : path.join(homedir(), ".claude");
+      : homedir();
 
-    // Record this project access
     await touchProject(projectPath);
-
     setIsSubmitting(true);
     await showToast({
       style: Toast.Style.Animated,
@@ -170,7 +192,6 @@ function AskClaudeForm({ claudePath }: { claudePath: string }) {
       push(
         <ResponseView
           response={response}
-          prompt={prompt}
           model={model}
           projectPath={projectPath}
           claudePath={claudePath}
@@ -191,7 +212,6 @@ function AskClaudeForm({ claudePath }: { claudePath: string }) {
   function handleProjectChange(value: string) {
     if (value === ADD_NEW_VALUE) {
       setShowManualPath(true);
-      // Don't change selectedProject — keep current selection
     } else {
       setSelectedProject(value);
       setShowManualPath(false);
@@ -217,13 +237,13 @@ function AskClaudeForm({ claudePath }: { claudePath: string }) {
             />
           )}
           <Action
-            title="Open Full Session in Terminal"
+            title="Open in Terminal"
             icon={Icon.Terminal}
             shortcut={{ modifiers: ["cmd", "shift"], key: "return" }}
             onAction={async () => {
               const projectPath = selectedProject
                 ? expandTilde(selectedProject)
-                : path.join(homedir(), ".claude");
+                : homedir();
               await touchProject(projectPath);
               await launchInTerminal(
                 claudePath,
@@ -232,6 +252,15 @@ function AskClaudeForm({ claudePath }: { claudePath: string }) {
               );
             }}
           />
+          {selectedProject && (
+            <Action
+              title="Remove Project"
+              icon={Icon.Trash}
+              style={Action.Style.Destructive}
+              shortcut={{ modifiers: ["ctrl"], key: "x" }}
+              onAction={handleRemoveProject}
+            />
+          )}
         </ActionPanel>
       }
     >
@@ -274,7 +303,7 @@ function AskClaudeForm({ claudePath }: { claudePath: string }) {
           <Form.Dropdown.Item
             key={p.path}
             value={p.path}
-            title={projectName(p.path)}
+            title={displayTitle(p.path)}
             icon={Icon.Folder}
           />
         ))}
@@ -298,10 +327,10 @@ function AskClaudeForm({ claudePath }: { claudePath: string }) {
           <Form.TextField
             id="manualPath"
             title="Or Type Path"
-            placeholder="~/code/my-project (supports ~)"
+            placeholder="~/code/my-project"
             value={manualPath}
             onChange={setManualPath}
-            info="Press ⌘+Enter to add this path"
+            info="Press Cmd+Enter to add this path"
           />
         </>
       )}
@@ -311,21 +340,17 @@ function AskClaudeForm({ claudePath }: { claudePath: string }) {
 
 // ─── Response View ───────────────────────────────────────────────────────────
 
-interface ResponseViewProps {
-  response: ClaudeResponse;
-  prompt: string;
-  model: string;
-  projectPath: string;
-  claudePath: string;
-}
-
 function ResponseView({
   response,
-  prompt,
   model,
   projectPath,
   claudePath,
-}: ResponseViewProps) {
+}: {
+  response: ClaudeResponse;
+  model: string;
+  projectPath: string;
+  claudePath: string;
+}) {
   const markdown = `${response.text}
 
 ---
@@ -367,7 +392,7 @@ function ResponseView({
   );
 }
 
-// ─── Claude CLI Integration ──────────────────────────────────────────────────
+// ─── Claude CLI ─────────────────────────────────────────────────────────────
 
 interface ClaudeResponse {
   text: string;
@@ -386,10 +411,7 @@ function runClaude(
     fs.mkdirSync(path.dirname(tmpFile), { recursive: true });
     fs.writeFileSync(tmpFile, prompt, "utf-8");
 
-    // Use --print for non-interactive mode (uses Max subscription, no API key needed)
-    const args = ["--print", "--model", model, "--output-format", "json"];
-
-    const cmd = `cat "${tmpFile}" | "${claudePath}" ${args.join(" ")}`;
+    const cmd = `cat "${tmpFile}" | "${claudePath}" --print --model ${model} --output-format json`;
 
     exec(
       cmd,
@@ -403,7 +425,6 @@ function runClaude(
         },
       },
       (err, stdout, stderr) => {
-        // Clean up temp file
         try {
           fs.unlinkSync(tmpFile);
         } catch {
@@ -411,14 +432,13 @@ function runClaude(
         }
 
         if (err) {
-          // Check if it's an auth issue
           if (
             stderr?.includes("not authenticated") ||
             stderr?.includes("login")
           ) {
             reject(
               new Error(
-                "Not authenticated. Run `claude` in your terminal first to log in with your Claude account.",
+                "Not authenticated. Run `claude` in your terminal first to log in.",
               ),
             );
             return;
@@ -428,14 +448,12 @@ function runClaude(
         }
 
         try {
-          // Try to parse JSON output
           const parsed = JSON.parse(stdout);
           resolve({
             text: parsed.result || parsed.text || parsed.content || stdout,
             sessionId: parsed.session_id || parsed.sessionId,
           });
         } catch {
-          // Fallback to raw text output
           resolve({ text: stdout.trim() });
         }
       },
@@ -451,23 +469,22 @@ async function launchInTerminal(
   prompt?: string,
   sessionId?: string,
 ) {
-  const prefs = getPreferenceValues<{ terminalApp?: string }>();
+  const prefs = getPreferenceValues<Preferences>();
   const terminal = prefs.terminalApp || "Terminal";
 
   let cmd = `cd "${cwd}" && "${claudePath}"`;
   if (sessionId) {
-    cmd += ` --resume "${sessionId}"`;
+    cmd += ` -r "${sessionId}"`;
   } else if (prompt) {
-    // Write prompt to temp file for complex prompts
+    // Write prompt to temp file, pipe it to claude, then clean up
     const tmpFile = path.join(environment.supportPath, "launch-prompt.txt");
     fs.mkdirSync(path.dirname(tmpFile), { recursive: true });
     fs.writeFileSync(tmpFile, prompt, "utf-8");
-    cmd += ` --prompt-file "${tmpFile}"`;
+    cmd = `cd "${cwd}" && cat "${tmpFile}" | "${claudePath}"; rm -f "${tmpFile}"`;
   }
 
-  const appleScript = getTerminalLaunchScript(terminal, cmd);
-
-  exec(`osascript -e '${appleScript.replace(/'/g, "'\"'\"'")}'`, (err) => {
+  const script = terminalScript(terminal, cmd);
+  exec(`osascript -e '${script.replace(/'/g, "'\"'\"'")}'`, (err) => {
     if (err) {
       showToast({
         style: Toast.Style.Failure,
@@ -478,14 +495,14 @@ async function launchInTerminal(
   });
 }
 
-function getTerminalLaunchScript(terminal: string, cmd: string): string {
-  const escapedCmd = cmd.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+function terminalScript(terminal: string, cmd: string): string {
+  const escaped = cmd.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 
   switch (terminal) {
     case "iTerm":
       return `tell application "iTerm"
   activate
-  set newWindow to (create window with default profile command "${escapedCmd}")
+  set newWindow to (create window with default profile command "${escaped}")
 end tell`;
 
     case "Warp":
@@ -493,24 +510,24 @@ end tell`;
 delay 0.5
 tell application "System Events" to tell process "Warp" to keystroke "t" using command down
 delay 0.3
-tell application "System Events" to tell process "Warp" to keystroke "${escapedCmd}"
+tell application "System Events" to tell process "Warp" to keystroke "${escaped}"
 tell application "System Events" to tell process "Warp" to key code 36`;
 
     case "kitty":
-      return `do shell script "open -a kitty --args sh -c '${escapedCmd}'"`;
+      return `do shell script "open -a kitty --args sh -c '${escaped}'"`;
 
     case "Ghostty":
       return `tell application "Ghostty" to activate
 delay 0.5
 tell application "System Events" to tell process "Ghostty" to keystroke "t" using command down
 delay 0.3
-tell application "System Events" to tell process "Ghostty" to keystroke "${escapedCmd}"
+tell application "System Events" to tell process "Ghostty" to keystroke "${escaped}"
 tell application "System Events" to tell process "Ghostty" to key code 36`;
 
-    default: // Terminal
+    default:
       return `tell application "Terminal"
   activate
-  do script "${escapedCmd}"
+  do script "${escaped}"
 end tell`;
   }
 }

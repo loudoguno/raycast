@@ -7,14 +7,14 @@ import {
   List,
   showToast,
   Toast,
-  getPreferenceValues,
 } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
-import { exec, execSync } from "child_process";
+import { execSync } from "child_process";
 import { homedir } from "os";
 import path from "path";
 import fs from "fs";
-import { shortenPath } from "./lib/utils";
+import readline from "readline";
+import { shortenPath, runCmd } from "./lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -66,14 +66,13 @@ export default function ActiveSessions() {
         sessions.map((s) => (
           <List.Item
             key={s.process.pid}
-            title={getSessionTitle(s)}
+            title={sessionTitle(s)}
             subtitle={
-              s.summary || s.process.cwd
-                ? shortenPath(s.process.cwd || "")
-                : undefined
+              s.summary ||
+              (s.process.cwd ? shortenPath(s.process.cwd) : undefined)
             }
-            icon={getStatusIcon(s)}
-            accessories={getAccessories(s)}
+            icon={statusIcon(s)}
+            accessories={sessionAccessories(s)}
             actions={
               <ActionPanel>
                 <Action
@@ -84,7 +83,7 @@ export default function ActiveSessions() {
                 <Action.Push
                   title="View Details"
                   icon={Icon.Eye}
-                  target={<SessionDetail session={s} />}
+                  target={<SessionDetailView session={s} />}
                 />
                 {s.sessionId && (
                   <Action.CopyToClipboard
@@ -129,11 +128,11 @@ export default function ActiveSessions() {
   );
 }
 
-// ─── Session Detail View ─────────────────────────────────────────────────────
+// ─── Detail View ─────────────────────────────────────────────────────────────
 
-function SessionDetail({ session: s }: { session: SessionInfo }) {
+function SessionDetailView({ session: s }: { session: SessionInfo }) {
   const lines: string[] = [];
-  lines.push(`# ${getSessionTitle(s)}`);
+  lines.push(`# ${sessionTitle(s)}`);
   lines.push("");
 
   if (s.summary) {
@@ -149,8 +148,8 @@ function SessionDetail({ session: s }: { session: SessionInfo }) {
 
   lines.push("## Details");
   lines.push("");
-  lines.push(`| Field | Value |`);
-  lines.push(`|-------|-------|`);
+  lines.push("| Field | Value |");
+  lines.push("|-------|-------|");
   lines.push(`| PID | \`${s.process.pid}\` |`);
   if (s.sessionId) lines.push(`| Session ID | \`${s.sessionId}\` |`);
   if (s.sessionName) lines.push(`| Session Name | ${s.sessionName} |`);
@@ -162,7 +161,7 @@ function SessionDetail({ session: s }: { session: SessionInfo }) {
   lines.push(`| Memory | ${s.process.mem} KB |`);
   lines.push(`| Started | ${s.process.startTime} |`);
   lines.push(
-    `| Status | ${s.isWaitingForUser ? "⏳ Waiting for input" : "🔄 Working"} |`,
+    `| Status | ${s.isWaitingForUser ? "Waiting for input" : "Working"} |`,
   );
   if (s.lastTool) lines.push(`| Last Tool | \`${s.lastTool}\` |`);
   if (s.remoteControlUrl)
@@ -205,23 +204,17 @@ function SessionDetail({ session: s }: { session: SessionInfo }) {
 // ─── Discovery ───────────────────────────────────────────────────────────────
 
 async function discoverSessions(): Promise<SessionInfo[]> {
-  // 1. Find running claude processes
   const processes = await findClaudeProcesses();
   if (processes.length === 0) return [];
 
-  // 2. Get working directories for all processes
   await resolveWorkingDirs(processes);
 
-  // 3. Get terminal tab titles
   const tabMap = await getTerminalTabTitles();
 
-  // 4. Match processes to JSONL session data
   const sessions: SessionInfo[] = [];
   for (const proc of processes) {
-    const session = await buildSessionInfo(proc, tabMap);
-    sessions.push(session);
+    sessions.push(await buildSessionInfo(proc, tabMap));
   }
-
   return sessions;
 }
 
@@ -240,7 +233,6 @@ async function findClaudeProcesses(): Promise<ClaudeProcess[]> {
       if (!match) continue;
 
       const tty = match[2];
-      // Skip non-interactive processes (background daemons)
       if (tty === "??" || tty === "?") continue;
 
       processes.push({
@@ -299,13 +291,12 @@ end tell`;
     for (const entry of output.split(", ")) {
       const [tty, title] = entry.split("|||");
       if (tty && title) {
-        // Strip Claude status prefixes (braille chars, spinner chars)
         const cleanTitle = title.replace(/^[⠀-⣿✳⠿⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏]+\s*/, "").trim();
         map.set(tty, cleanTitle);
       }
     }
   } catch {
-    // Terminal may not be running or AppleScript may fail
+    // Terminal may not be running
   }
   return map;
 }
@@ -321,11 +312,9 @@ async function buildSessionInfo(
     tabTitle: tabMap.get(proc.tty) || tabMap.get(`/dev/${proc.tty}`),
   };
 
-  // Get git info
   if (proc.cwd) {
     try {
-      const gitDir = path.join(proc.cwd, ".git");
-      if (fs.existsSync(gitDir)) {
+      if (fs.existsSync(path.join(proc.cwd, ".git"))) {
         session.gitBranch = execSync(
           `git -C "${proc.cwd}" branch --show-current 2>/dev/null`,
           { encoding: "utf-8" },
@@ -338,34 +327,33 @@ async function buildSessionInfo(
     } catch {
       /* ignore */
     }
-  }
 
-  // Match to JSONL session file
-  if (proc.cwd) {
     await matchSessionData(proc, session);
   }
 
   return session;
 }
 
+// ─── JSONL Session Matching ──────────────────────────────────────────────────
+
 async function matchSessionData(
   proc: ClaudeProcess,
   session: SessionInfo,
 ): Promise<void> {
-  const claudeProjectsDir = path.join(homedir(), ".claude", "projects");
-  if (!fs.existsSync(claudeProjectsDir)) return;
+  const projectsDir = path.join(homedir(), ".claude", "projects");
+  if (!fs.existsSync(projectsDir)) return;
 
   try {
-    const projectDirs = fs.readdirSync(claudeProjectsDir);
+    const dirs = fs.readdirSync(projectsDir);
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000;
     const candidates: { file: string; mtime: number }[] = [];
-    const cutoff = Date.now() - 24 * 60 * 60 * 1000; // 24 hours
 
-    for (const dir of projectDirs) {
-      const dirPath = path.join(claudeProjectsDir, dir);
+    for (const dir of dirs) {
+      const dirPath = path.join(projectsDir, dir);
       if (!fs.statSync(dirPath).isDirectory()) continue;
 
-      const files = fs.readdirSync(dirPath).filter((f) => f.endsWith(".jsonl"));
-      for (const file of files) {
+      for (const file of fs.readdirSync(dirPath)) {
+        if (!file.endsWith(".jsonl")) continue;
         const filePath = path.join(dirPath, file);
         const stat = fs.statSync(filePath);
         if (stat.mtimeMs > cutoff) {
@@ -374,12 +362,10 @@ async function matchSessionData(
       }
     }
 
-    // Sort by most recent
     candidates.sort((a, b) => b.mtime - a.mtime);
 
-    // Find best match by CWD
     for (const { file } of candidates) {
-      const info = parseJsonlSession(file, proc.cwd!);
+      const info = await parseSessionHead(file, proc.cwd!);
       if (info) {
         session.sessionId = path.basename(file, ".jsonl");
         session.sessionName = info.sessionName;
@@ -405,15 +391,15 @@ interface ParsedSession {
   remoteControlUrl?: string;
 }
 
-function parseJsonlSession(
+/**
+ * Stream-parse a JSONL session file, reading only enough to extract metadata.
+ * Reads the first 100 lines for CWD/summary and the last 20 for recent activity.
+ */
+function parseSessionHead(
   filePath: string,
   expectedCwd: string,
-): ParsedSession | null {
-  try {
-    const content = fs.readFileSync(filePath, "utf-8");
-    const lines = content.split("\n").filter(Boolean);
-    if (lines.length === 0) return null;
-
+): Promise<ParsedSession | null> {
+  return new Promise((resolve) => {
     let cwd: string | undefined;
     let sessionName: string | undefined;
     let summary: string | undefined;
@@ -421,134 +407,165 @@ function parseJsonlSession(
     let lastTool: string | undefined;
     let isWaitingForUser = false;
     let remoteControlUrl: string | undefined;
+    let lineCount = 0;
+    let cwdChecked = false;
 
-    for (const line of lines) {
-      try {
-        const entry = JSON.parse(line);
+    // Keep a rolling buffer of the last 20 lines for tail parsing
+    const tailBuffer: string[] = [];
+    const TAIL_SIZE = 20;
 
-        // Get CWD from first entry
-        if (!cwd && entry.cwd) {
-          cwd = entry.cwd;
-        }
+    const stream = fs.createReadStream(filePath, {
+      encoding: "utf8",
+      highWaterMark: 16 * 1024,
+    });
+    const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
 
-        // Check CWD match
-        if (cwd && cwd !== expectedCwd) return null;
+    rl.on("line", (line) => {
+      lineCount++;
 
-        // Session name from /rename command
-        if (entry.type === "system" && entry.subtype === "local_command") {
-          const content = entry.content || "";
-          if (content.includes("/rename")) {
-            const argsMatch = content.match(
+      // Keep rolling tail buffer
+      tailBuffer.push(line);
+      if (tailBuffer.length > TAIL_SIZE) tailBuffer.shift();
+
+      // Only parse first 50 lines in detail for CWD + summary
+      if (lineCount <= 50) {
+        try {
+          const entry = JSON.parse(line);
+
+          if (!cwd && entry.cwd) {
+            cwd = entry.cwd;
+            cwdChecked = true;
+            if (cwd !== expectedCwd) {
+              rl.close();
+              stream.destroy();
+              resolve(null);
+              return;
+            }
+          }
+
+          if (
+            entry.type === "system" &&
+            entry.subtype === "local_command" &&
+            entry.content?.includes("/rename")
+          ) {
+            const match = entry.content.match(
               /<command-args>(.*?)<\/command-args>/,
             );
-            if (argsMatch) sessionName = argsMatch[1];
+            if (match) sessionName = match[1];
           }
-        }
 
-        // First user message as summary
-        if (!summary && entry.type === "user" && entry.message?.content) {
-          const text =
-            typeof entry.message.content === "string"
-              ? entry.message.content
-              : Array.isArray(entry.message.content)
-                ? entry.message.content.find(
-                    (b: { type: string }) => b.type === "text",
-                  )?.text
-                : undefined;
-          if (text) {
-            summary = text.slice(0, 120);
+          if (!summary && entry.type === "user" && entry.message?.content) {
+            const text =
+              typeof entry.message.content === "string"
+                ? entry.message.content
+                : Array.isArray(entry.message.content)
+                  ? entry.message.content.find(
+                      (b: { type: string }) => b.type === "text",
+                    )?.text
+                  : undefined;
+            if (text) summary = text.slice(0, 120);
           }
+        } catch {
+          /* skip malformed */
         }
-
-        // Last assistant activity
-        if (entry.type === "assistant" && entry.message?.content) {
-          const blocks = Array.isArray(entry.message.content)
-            ? entry.message.content
-            : [];
-          for (const block of blocks) {
-            if (block.type === "text" && block.text) {
-              lastActivity = block.text.slice(0, 200);
-            }
-            if (block.type === "tool_use") {
-              lastTool = block.name;
-            }
-          }
-          isWaitingForUser = false;
-        }
-
-        if (entry.type === "user") {
-          isWaitingForUser = false;
-        }
-
-        // Detect waiting state - last entry is assistant with result
-        if (entry.type === "result") {
-          isWaitingForUser = true;
-        }
-
-        // Remote control URL
-        if (entry.remoteControlUrl) {
-          remoteControlUrl = entry.remoteControlUrl;
-        }
-      } catch {
-        /* skip malformed lines */
       }
-    }
+    });
 
-    // Only return if CWD matched (or wasn't set)
-    if (cwd && cwd !== expectedCwd) return null;
+    rl.on("close", () => {
+      // If CWD was found and didn't match, we already resolved null
+      if (cwdChecked && cwd !== expectedCwd) return;
+      // If no CWD found at all, skip (can't confirm match)
+      if (!cwdChecked) {
+        resolve(null);
+        return;
+      }
 
-    return {
-      sessionName,
-      summary,
-      lastActivity,
-      lastTool,
-      isWaitingForUser,
-      remoteControlUrl,
-    };
-  } catch {
-    return null;
-  }
+      // Parse tail buffer for recent activity
+      for (const tailLine of tailBuffer) {
+        try {
+          const entry = JSON.parse(tailLine);
+
+          if (entry.type === "assistant" && entry.message?.content) {
+            const blocks = Array.isArray(entry.message.content)
+              ? entry.message.content
+              : [];
+            for (const block of blocks) {
+              if (block.type === "text" && block.text) {
+                lastActivity = block.text.slice(0, 200);
+              }
+              if (block.type === "tool_use") {
+                lastTool = block.name;
+              }
+            }
+            isWaitingForUser = false;
+          }
+
+          if (entry.type === "result") {
+            isWaitingForUser = true;
+          }
+
+          if (entry.remoteControlUrl) {
+            remoteControlUrl = entry.remoteControlUrl;
+          }
+        } catch {
+          /* skip */
+        }
+      }
+
+      resolve({
+        sessionName,
+        summary,
+        lastActivity,
+        lastTool,
+        isWaitingForUser,
+        remoteControlUrl,
+      });
+    });
+
+    rl.on("error", () => resolve(null));
+    stream.on("error", () => resolve(null));
+  });
 }
 
 // ─── UI Helpers ──────────────────────────────────────────────────────────────
 
-function getSessionTitle(s: SessionInfo): string {
+function sessionTitle(s: SessionInfo): string {
   if (s.sessionName) return s.sessionName;
   if (s.tabTitle) return s.tabTitle;
   if (s.process.cwd) return path.basename(s.process.cwd);
   return `Claude (PID ${s.process.pid})`;
 }
 
-function getStatusIcon(s: SessionInfo): { source: Icon; tintColor: Color } {
-  const cpuVal = parseFloat(s.process.cpu);
-  if (cpuVal > 50)
+function statusIcon(s: SessionInfo): { source: Icon; tintColor: Color } {
+  if (parseFloat(s.process.cpu) > 50)
     return { source: Icon.CircleFilled, tintColor: Color.Orange };
   if (s.isWaitingForUser)
     return { source: Icon.CircleFilled, tintColor: Color.Blue };
   return { source: Icon.CircleFilled, tintColor: Color.Green };
 }
 
-function getAccessories(s: SessionInfo): List.Item.Accessory[] {
-  const accessories: List.Item.Accessory[] = [];
+function sessionAccessories(s: SessionInfo): List.Item.Accessory[] {
+  const acc: List.Item.Accessory[] = [];
 
-  const cpuVal = parseFloat(s.process.cpu);
-  if (cpuVal > 50) {
-    accessories.push({ tag: { value: "Working", color: Color.Orange } });
+  if (parseFloat(s.process.cpu) > 50) {
+    acc.push({ tag: { value: "Working", color: Color.Orange } });
   } else if (s.isWaitingForUser) {
-    accessories.push({ tag: { value: "Waiting", color: Color.Blue } });
+    acc.push({ tag: { value: "Waiting", color: Color.Blue } });
   } else {
-    accessories.push({ tag: { value: "Idle", color: Color.Green } });
+    acc.push({ tag: { value: "Idle", color: Color.Green } });
   }
 
   if (s.gitBranch) {
-    accessories.push({ text: `⑃ ${s.gitBranch}${s.hasRemote ? " ☁️" : ""}` });
+    acc.push({
+      text: `⑃ ${s.gitBranch}${s.hasRemote ? " ☁️" : ""}`,
+    });
   }
 
   if (s.lastTool) {
-    accessories.push({ text: s.lastTool, icon: Icon.Hammer });
+    acc.push({ text: s.lastTool, icon: Icon.Hammer });
   }
 
-  return accessories;
+  return acc;
 }
 
 // ─── Terminal Navigation ─────────────────────────────────────────────────────
@@ -557,7 +574,6 @@ async function switchToSession(session: SessionInfo) {
   const tty = session.process.tty;
 
   try {
-    // Try Terminal.app first
     const script = `tell application "Terminal"
   activate
   set targetTTY to "${tty}"
@@ -577,11 +593,8 @@ end tell`;
     const result = await runCmd(
       `osascript -e '${script.replace(/'/g, "'\"'\"'")}'`,
     );
-    if (result.includes("found")) {
-      return;
-    }
+    if (result.includes("found")) return;
 
-    // Fallback: just activate Terminal
     await runCmd(`osascript -e 'tell application "Terminal" to activate'`);
   } catch {
     await showToast({
@@ -589,15 +602,4 @@ end tell`;
       title: "Could not switch to session",
     });
   }
-}
-
-// ─── Utility ─────────────────────────────────────────────────────────────────
-
-function runCmd(cmd: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    exec(cmd, { timeout: 10000, maxBuffer: 5 * 1024 * 1024 }, (err, stdout) => {
-      if (err) reject(err);
-      else resolve(stdout.trim());
-    });
-  });
 }

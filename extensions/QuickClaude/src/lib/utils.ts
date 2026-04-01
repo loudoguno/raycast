@@ -4,8 +4,6 @@ import path from "path";
 import { getPreferenceValues } from "@raycast/api";
 
 interface Preferences {
-  defaultModel?: string;
-  terminalApp?: string;
   claudeCodePath?: string;
 }
 
@@ -28,6 +26,16 @@ export function shortenPath(p: string): string {
     return "~" + p.slice(home.length);
   }
   return p;
+}
+
+/**
+ * Get the display name for a project path.
+ * Shows basename, with parent dir for disambiguation when needed.
+ */
+export function projectName(projectPath: string): string {
+  const expanded = expandTilde(projectPath);
+  if (expanded === homedir()) return "~";
+  return path.basename(expanded);
 }
 
 /**
@@ -54,7 +62,6 @@ export function findClaudePath(): string | null {
     }
   }
 
-  // Try which
   try {
     const result = execSync(
       "which claude 2>/dev/null || command -v claude 2>/dev/null",
@@ -75,36 +82,24 @@ export function findClaudePath(): string | null {
 }
 
 /**
- * Run a shell command and return stdout.
+ * Run a shell command and return stdout. Shared by all commands.
  */
-export function runCommand(cmd: string, timeout = 10000): Promise<string> {
+export function runCmd(cmd: string, timeout = 10000): Promise<string> {
   return new Promise((resolve, reject) => {
     exec(
       cmd,
       {
         timeout,
+        maxBuffer: 5 * 1024 * 1024,
         env: {
           ...process.env,
           PATH: `${process.env.PATH}:/usr/local/bin:/opt/homebrew/bin`,
         },
       },
-      (err, stdout, stderr) => {
-        if (err) {
-          reject(new Error(stderr || err.message));
-        } else {
-          resolve(stdout.trim());
-        }
+      (err, stdout) => {
+        if (err) reject(err);
+        else resolve(stdout.trim());
       },
     );
   });
-}
-
-/**
- * Get the basename of a path for display.
- */
-export function projectName(projectPath: string): string {
-  const expanded = expandTilde(projectPath);
-  if (expanded === homedir()) return "~";
-  if (expanded === path.join(homedir(), ".claude")) return "~/.claude";
-  return path.basename(expanded);
 }
