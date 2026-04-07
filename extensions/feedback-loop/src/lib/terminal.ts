@@ -7,13 +7,19 @@ import * as os from "os";
 const execAsync = promisify(exec);
 
 function getTerminalApp(): string {
-  const apps = ["iTerm", "Ghostty", "Terminal"];
-  for (const app of apps) {
+  // Terminal.app lives in /System/Applications/Utilities/, not /Applications/
+  const checks: [string, string][] = [
+    ["Terminal", "/System/Applications/Utilities/Terminal.app"],
+    ["Terminal", "/Applications/Terminal.app"],
+    ["iTerm", "/Applications/iTerm.app"],
+    ["Ghostty", "/Applications/Ghostty.app"],
+  ];
+  for (const [name, appPath] of checks) {
     try {
-      fs.accessSync(`/Applications/${app}.app`);
-      return app;
+      fs.accessSync(appPath);
+      return name;
     } catch {
-      // Continue to next app
+      // Continue
     }
   }
   return "Terminal";
