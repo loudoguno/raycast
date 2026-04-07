@@ -1,12 +1,13 @@
 import { exec } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
 
 const execAsync = promisify(exec);
-const HOME = process.env.HOME || "";
 
 function getTerminalApp(): string {
-  const apps = ["Ghostty", "iTerm", "Terminal"];
+  const apps = ["iTerm", "Ghostty", "Terminal"];
   for (const app of apps) {
     try {
       fs.accessSync(`/Applications/${app}.app`);
@@ -18,24 +19,58 @@ function getTerminalApp(): string {
   return "Terminal";
 }
 
+/**
+ * Launch an interactive command in a new terminal window.
+ * Writes a self-cleaning launcher script to /tmp to avoid
+ * keystroke injection issues with long commands.
+ */
 export async function executeInTerminal(command: string): Promise<void> {
   const terminal = getTerminalApp();
-  const expandedCommand = command.replace(/~/g, HOME);
+  const home = os.homedir();
+  const expandedCommand = command.replace(/~/g, home);
 
-  // Escape double quotes for AppleScript string
-  const escapedCommand = expandedCommand.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  // Write self-cleaning launcher script
+  const scriptPath = path.join(os.tmpdir(), `burn-${Date.now()}.sh`);
+  const scriptContent = [
+    "#!/bin/bash",
+    `trap 'rm -f "${scriptPath}"' EXIT`,
+    expandedCommand,
+  ].join("\n");
+  fs.writeFileSync(scriptPath, scriptContent, { mode: 0o755 });
 
-  const script = `
-    tell application "${terminal}"
-      activate
-    end tell
-    delay 0.3
-    tell application "System Events"
-      keystroke "${escapedCommand}"
-      keystroke return
-    end tell
-  `;
-
-  // Use heredoc-style execution to avoid shell quoting issues
-  await execAsync(`osascript -e '${script.replace(/'/g, "'\\''")}'`);
+  if (terminal === "iTerm") {
+    const script = `
+      tell application "iTerm"
+        activate
+        create window with default profile command "${scriptPath}"
+      end tell
+    `;
+    await execAsync(`osascript -e '${script.replace(/'/g, "'\\''")}'`);
+  } else if (terminal === "Ghostty") {
+    // Ghostty: open new window, keystroke just the short script path
+    const script = `
+      tell application "Ghostty" to activate
+      delay 0.5
+      tell application "System Events"
+        keystroke "n" using command down
+      end tell
+      delay 0.3
+      tell application "System Events"
+        keystroke "${scriptPath}"
+        keystroke return
+      end tell
+    `;
+    await execAsync(`osascript -e '${script.replace(/'/g, "'\\''")}'`);
+  } else {
+    // Terminal.app
+    const script = `
+      tell application "Terminal"
+        activate
+        do script "${scriptPath}"
+      end tell
+    `;
+    await execAsync(`osascript -e '${script.replace(/'/g, "'\\''")}'`);
+  }
 }
+
+export { getTerminalApp };

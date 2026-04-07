@@ -16,6 +16,7 @@ This is a personal collection of custom Raycast extensions for macOS. The reposi
 6. **RoamResearch** - Zero-friction search and preview for Roam Research knowledge graphs (custom, not a fork)
 7. **Claude Sessions** - Live dashboard of all running Claude Code terminal sessions with status, context, and remote control URL support
 8. **Search Status Menu** - Keyboard-driven search and click for macOS menubar/status items via Swift helper + Accessibility API
+9. **User Feedback Loop** - Submit feedback as GitHub Issues for any extension, burn through backlog with Claude Code agents
 
 ## Common Development Commands
 
@@ -261,6 +262,37 @@ extension-name/
 - `swift-helper/build.sh` - Compiles Swift helper via `swiftc`
 
 **Setup**: Swift helper must be compiled per machine: `cd swift-helper && ./build.sh`, then copy binary to `assets/status-menu-helper`
+
+#### 9. User Feedback Loop Extension
+- Central feedback hub for all extensions — two commands, no per-extension wiring needed
+- GitHub Issues integration via REST API with PAT stored in Raycast password preference
+- Hybrid extension discovery: runtime scan of `extensions/*/package.json` + static fallback for 18 known extensions
+- Draft persistence via `LocalStorage` (debounced saves, resume on reopen)
+- Terminal agent spawning adapted from `claude-built` extension (`getTerminalApp()` + osascript)
+
+**Commands**:
+- `submit-feedback` - Form with extension picker, type selector (bug/feature/improvement), title/description, draft auto-save
+- `burn-backlog` - Extension list with issue counts, drill into issues, "Burn" spawns `claude -p` in Terminal
+
+**Key Architecture**:
+- `src/submit-feedback.tsx` - Form with LocalStorage draft persistence, GitHub Issue creation
+- `src/burn-backlog.tsx` - Extension list with issue count badges → issue list → agent spawn in Terminal
+- `src/lib/github-client.ts` - `createIssue()`, `listIssues()` via GitHub REST API (native fetch, no deps)
+- `src/lib/extensions.ts` - `discoverExtensions()` with runtime scan + static fallback, `findExtensionByName()`
+- `src/lib/terminal.ts` - `executeInTerminal()` via osascript (Ghostty/iTerm/Terminal auto-detect)
+- `src/lib/types.ts` - ExtensionInfo, GitHubIssue, CreateIssueParams, DraftState interfaces
+
+**Preferences**:
+- `githubToken` (password) - Fine-grained PAT with Issues R/W scope for `loudoguno/raycast`
+- `extensionsPath` (textfield) - Path to raycast repo, default `~/code/raycast`
+
+**GitHub Labels**: Extension uses `feedback` + `ext:<package-name>` + type labels (`bug`, `enhancement`, `improvement`) on `loudoguno/raycast`. Labels pre-created via `gh label create`.
+
+**v2 Roadmap** (deferred):
+- AI triage layer in Burn Backlog (dedup, prioritize, score difficulty, assess actionability)
+- Beads integration (route feedback to beads in addition to GitHub Issues)
+- "New extension request" form variant
+- Per-extension ActionPanel shortcuts via `launchCommand`
 
 ### Technology Stack
 
