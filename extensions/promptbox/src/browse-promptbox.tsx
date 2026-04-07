@@ -98,107 +98,102 @@ export default function BrowsePromptbox() {
     setIsLoading(false);
   }, []);
 
+  const sortedPrompts = [...prompts].sort((a, b) => {
+    const au = a.updated || "";
+    const bu = b.updated || "";
+    return bu > au ? 1 : bu < au ? -1 : 0;
+  });
+
   return (
     <List searchBarPlaceholder="Search prompts…" isLoading={isLoading}>
-      {STAGE_ORDER.map((stage) => {
-        const stagePrompts = prompts
-          .filter((p) => p.stage === stage)
-          .sort((a, b) => (b.updated > a.updated ? 1 : -1));
-        if (stagePrompts.length === 0) return null;
-        const { icon, color } = STAGE_ICONS[stage];
+      {sortedPrompts.map((p) => {
+        const { icon, color } = STAGE_ICONS[p.stage];
         return (
-          <List.Section
-            key={stage}
-            title={stage.charAt(0).toUpperCase() + stage.slice(1)}
-            subtitle={`${stagePrompts.length}`}
-          >
-            {stagePrompts.map((p) => (
-              <List.Item
-                key={p.filePath}
-                title={p.title}
-                subtitle={p.body.slice(0, 80)}
-                icon={{ source: icon, tintColor: color }}
-                accessories={[
-                  ...p.tags.map((t) => ({ tag: t })),
-                  { text: p.machine },
-                  { date: p.updated ? new Date(p.updated) : undefined },
-                ]}
-                actions={
-                  <ActionPanel>
-                    <Action.Open
-                      title="Open in VS Code"
-                      target={p.filePath}
-                      application="com.microsoft.VSCode"
-                      icon={Icon.Code}
-                    />
-                    {getNextStage(p.stage) && (
-                      <Action
-                        title={`Move to ${(getNextStage(p.stage) as string).charAt(0).toUpperCase() + (getNextStage(p.stage) as string).slice(1)}`}
-                        icon={Icon.ArrowRight}
-                        shortcut={{
-                          modifiers: ["cmd", "shift"],
-                          key: "arrowRight",
-                        }}
-                        onAction={async () => {
-                          const next = getNextStage(p.stage)!;
-                          movePromptToStage(p, next);
-                          await showToast({
-                            style: Toast.Style.Success,
-                            title: `Moved to ${next}`,
-                          });
-                          reload();
-                        }}
-                      />
-                    )}
-                    {getPreviousStage(p.stage) && (
-                      <Action
-                        title={`Move to ${(getPreviousStage(p.stage) as string).charAt(0).toUpperCase() + (getPreviousStage(p.stage) as string).slice(1)}`}
-                        icon={Icon.ArrowLeft}
-                        shortcut={{
-                          modifiers: ["cmd", "shift"],
-                          key: "arrowLeft",
-                        }}
-                        onAction={async () => {
-                          const prev = getPreviousStage(p.stage)!;
-                          movePromptToStage(p, prev);
-                          await showToast({
-                            style: Toast.Style.Success,
-                            title: `Moved to ${prev}`,
-                          });
-                          reload();
-                        }}
-                      />
-                    )}
-                    <Action
-                      title="Delete Prompt"
-                      icon={Icon.Trash}
-                      style={Action.Style.Destructive}
-                      shortcut={{ modifiers: ["cmd"], key: "backspace" }}
-                      onAction={async () => {
-                        if (
-                          await confirmAlert({
-                            title: "Delete Prompt",
-                            message: `Are you sure you want to delete "${p.title}"? This cannot be undone.`,
-                            primaryAction: {
-                              title: "Delete",
-                              style: Alert.ActionStyle.Destructive,
-                            },
-                          })
-                        ) {
-                          fs.unlinkSync(p.filePath);
-                          await showToast({
-                            style: Toast.Style.Success,
-                            title: "Prompt deleted",
-                          });
-                          reload();
-                        }
-                      }}
-                    />
-                  </ActionPanel>
-                }
-              />
-            ))}
-          </List.Section>
+          <List.Item
+            key={p.filePath}
+            title={p.title}
+            subtitle={p.body.slice(0, 80)}
+            icon={{ source: icon, tintColor: color }}
+            accessories={[
+              ...p.tags.map((t) => ({ tag: t })),
+              { text: p.machine },
+              { tag: { value: p.stage, color } },
+              { date: p.updated ? new Date(p.updated) : undefined },
+            ]}
+            actions={
+              <ActionPanel>
+                <Action.Open
+                  title="Open in VS Code"
+                  target={p.filePath}
+                  application="com.microsoft.VSCode"
+                  icon={Icon.Code}
+                />
+                {getNextStage(p.stage) && (
+                  <Action
+                    title={`Move to ${(getNextStage(p.stage) as string).charAt(0).toUpperCase() + (getNextStage(p.stage) as string).slice(1)}`}
+                    icon={Icon.ArrowRight}
+                    shortcut={{
+                      modifiers: ["cmd", "shift"],
+                      key: "arrowRight",
+                    }}
+                    onAction={async () => {
+                      const next = getNextStage(p.stage)!;
+                      movePromptToStage(p, next);
+                      await showToast({
+                        style: Toast.Style.Success,
+                        title: `Moved to ${next}`,
+                      });
+                      reload();
+                    }}
+                  />
+                )}
+                {getPreviousStage(p.stage) && (
+                  <Action
+                    title={`Move to ${(getPreviousStage(p.stage) as string).charAt(0).toUpperCase() + (getPreviousStage(p.stage) as string).slice(1)}`}
+                    icon={Icon.ArrowLeft}
+                    shortcut={{
+                      modifiers: ["cmd", "shift"],
+                      key: "arrowLeft",
+                    }}
+                    onAction={async () => {
+                      const prev = getPreviousStage(p.stage)!;
+                      movePromptToStage(p, prev);
+                      await showToast({
+                        style: Toast.Style.Success,
+                        title: `Moved to ${prev}`,
+                      });
+                      reload();
+                    }}
+                  />
+                )}
+                <Action
+                  title="Delete Prompt"
+                  icon={Icon.Trash}
+                  style={Action.Style.Destructive}
+                  shortcut={{ modifiers: ["cmd"], key: "backspace" }}
+                  onAction={async () => {
+                    if (
+                      await confirmAlert({
+                        title: "Delete Prompt",
+                        message: `Are you sure you want to delete "${p.title}"? This cannot be undone.`,
+                        primaryAction: {
+                          title: "Delete",
+                          style: Alert.ActionStyle.Destructive,
+                        },
+                      })
+                    ) {
+                      fs.unlinkSync(p.filePath);
+                      await showToast({
+                        style: Toast.Style.Success,
+                        title: "Prompt deleted",
+                      });
+                      reload();
+                    }
+                  }}
+                />
+              </ActionPanel>
+            }
+          />
         );
       })}
     </List>
