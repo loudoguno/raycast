@@ -1,5 +1,6 @@
 import { List, ActionPanel, Action, Icon, Color, showHUD, closeMainWindow } from "@raycast/api";
 import { execSync } from "child_process";
+import { isDisabled, setDisabled } from "./loutools";
 
 const LOUTOOLS_PATH = "/usr/local/bin/loutools";
 
@@ -10,6 +11,7 @@ interface Target {
 }
 
 const TARGETS: Target[] = [
+  { name: "Disabled", description: "Do nothing — let shortcut reach other apps", icon: "⛔" },
   { name: "auto", description: "Auto-detect — prefer playing, then available", icon: "🔄" },
   { name: "YouTube", description: "Chrome tab — youtube.com", icon: "🎬" },
   { name: "Suno", description: "Chrome tab — suno.com", icon: "🎵" },
@@ -20,6 +22,7 @@ const TARGETS: Target[] = [
 ];
 
 function getCurrentTarget(): string {
+  if (isDisabled()) return "Disabled";
   try {
     const output = execSync(`${LOUTOOLS_PATH} remote target`, {
       encoding: "utf-8",
@@ -34,6 +37,11 @@ function getCurrentTarget(): string {
 }
 
 function setTarget(name: string): void {
+  if (name === "Disabled") {
+    setDisabled(true);
+    return;
+  }
+  setDisabled(false);
   execSync(`${LOUTOOLS_PATH} remote target ${name}`, {
     encoding: "utf-8",
     timeout: 3000,
@@ -62,7 +70,13 @@ export default function Command() {
                   onAction={async () => {
                     setTarget(t.name);
                     await closeMainWindow();
-                    await showHUD(t.name === "auto" ? "Remote: Auto-detect" : `Remote: ${t.name}`);
+                    const hudMsg =
+                      t.name === "Disabled"
+                        ? "Remote: Disabled — shortcuts pass through"
+                        : t.name === "auto"
+                          ? "Remote: Auto-detect"
+                          : `Remote: ${t.name}`;
+                    await showHUD(hudMsg);
                   }}
                 />
               </ActionPanel>

@@ -1,7 +1,33 @@
 import { showHUD, showToast, Toast } from "@raycast/api";
 import { spawnSync } from "child_process";
+import { existsSync, writeFileSync, unlinkSync } from "fs";
+import { homedir } from "os";
 
 const LOUTOOLS_PATH = "/usr/local/bin/loutools";
+const DISABLED_FLAG = `${homedir()}/.loutools_disabled`;
+
+/**
+ * Returns true if the user has set the remote to "Disabled" mode.
+ * Uses a flag file so the check is synchronous (no async complications).
+ */
+export function isDisabled(): boolean {
+  return existsSync(DISABLED_FLAG);
+}
+
+/**
+ * Set or clear the disabled flag.
+ */
+export function setDisabled(disabled: boolean): void {
+  if (disabled) {
+    writeFileSync(DISABLED_FLAG, "1");
+  } else {
+    try {
+      unlinkSync(DISABLED_FLAG);
+    } catch {
+      // already gone — fine
+    }
+  }
+}
 
 /**
  * Run a loutools remote command and show HUD feedback.
@@ -11,6 +37,10 @@ const LOUTOOLS_PATH = "/usr/local/bin/loutools";
  * warnings can cause non-zero exits even when the command worked.
  */
 export async function runRemote(args: string[], hudMessage: string): Promise<void> {
+  if (isDisabled()) {
+    return; // silent no-op — remote is disabled, shortcut does nothing
+  }
+
   const result = spawnSync(LOUTOOLS_PATH, ["remote", ...args], {
     encoding: "utf-8",
     timeout: 5000,
