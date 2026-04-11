@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>raycast — Project Journal</title>
+<style>
+/* === Claude Code Inspired Design System === */
+/* Tight spacing, disclosure arrows, monospace meta, warm-minimal palette */
+
+:root {
+    --bg-primary: #1a1a1a;  /* Designer spec: exact Claude Code values */
+    --bg-secondary: #212121;
+    --bg-tertiary: #2d2d2d;
+    --bg-hover: #333333;
+    --text-primary: #e8e8e8;
+    --text-secondary: #a0a0a0;
+    --text-muted: #666666;
+    --accent: #da7756;
+    --accent-dim: #da775620;
+    --border: #333333;
+    --border-subtle: #2a2a2a;
+    --code-bg: #1e1e1e;
+    --green: #4ade80;
+    --orange: #fb923c;
+    --blue: #60a5fa;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'Söhne Mono', 'JetBrains Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --content-width: 680px;
+    --line-height: 1.45;
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 12px;
+    --spacing-lg: 20px;
+    --spacing-xl: 32px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: var(--line-height);
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* === Layout === */
+.container {
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: var(--spacing-xl) var(--spacing-lg);
+}
+
+/* === Header === */
+.header {
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--border);
+}
+.header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+.header .subtitle {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+.header .subtitle a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+.header .subtitle a:hover {
+    color: var(--accent);
+}
+.header-meta {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-sm);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* === Session Cards === */
+.session-card {
+    margin-bottom: 2px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+}
+.session-card[open] {
+    border-color: var(--border);
+}
+.session-header {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+}
+.session-header::-webkit-details-marker { display: none; }
+.session-header::before {
+    content: '\25B6';
+    font-size: 9px;
+    color: var(--text-muted);
+    position: absolute;
+    margin-left: -14px;
+    margin-top: 3px;
+    transition: transform 0.15s ease;
+}
+.session-card[open] > .session-header::before {
+    transform: rotate(90deg);
+}
+.session-header {
+    position: relative;
+    padding-left: calc(var(--spacing-lg) + 6px);
+}
+.session-header:hover {
+    background: var(--bg-hover);
+}
+.session-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+.session-meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.3;
+}
+.meta-sep { color: var(--border); margin: 0 1px; }
+
+/* === Session Body === */
+.session-body {
+    padding: 0 var(--spacing-lg) var(--spacing-lg) calc(var(--spacing-lg) + 6px);
+}
+.session-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+}
+.tag {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    padding: 1px 7px;
+    border-radius: 3px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    letter-spacing: 0.02em;
+}
+
+/* === Content Styling === */
+.session-content h2 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    margin: var(--spacing-lg) 0 var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid var(--border-subtle);
+}
+.session-content h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: var(--spacing-md) 0 var(--spacing-xs);
+}
+.session-content p {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+}
+.session-content ul, .session-content ol {
+    padding-left: 18px;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-secondary);
+}
+.session-content li {
+    margin-bottom: 2px;
+}
+.session-content li::marker {
+    color: var(--text-muted);
+}
+.session-content strong {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+.session-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: var(--spacing-sm) 0;
+    font-size: 12.5px;
+}
+.session-content td {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+.session-content td:first-child {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+/* === Inline Code === */
+code.inline {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--bg-tertiary);
+    color: var(--accent);
+}
+
+/* === Code Blocks === */
+pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
+    padding: var(--spacing-md);
+    margin: var(--spacing-sm) 0;
+    overflow-x: auto;
+}
+pre code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* === Commits Detail === */
+.commits-detail {
+    margin: var(--spacing-sm) 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.commits-detail summary {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-muted);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    cursor: pointer;
+    background: var(--bg-tertiary);
+    list-style: none;
+}
+.commits-detail summary::-webkit-details-marker { display: none; }
+.commits-detail summary::before {
+    content: '\25B6 ';
+    font-size: 8px;
+    transition: transform 0.15s ease;
+    display: inline-block;
+}
+.commits-detail[open] summary::before {
+    transform: rotate(90deg);
+}
+.commit-list {
+    list-style: none;
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+.commit-list li {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 2px 0;
+    font-family: var(--font-sans);
+}
+.commit-list code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--orange);
+    background: var(--bg-tertiary);
+    padding: 0 4px;
+    border-radius: 2px;
+}
+
+/* === Checklist === */
+.checklist { list-style: none; padding-left: 0; }
+.checklist li { padding: 2px 0; }
+.checklist li::before { margin-right: 6px; }
+.checked::before { content: '\2713'; color: var(--green); }
+.unchecked::before { content: '\25CB'; color: var(--text-muted); }
+
+/* === Footer === */
+.footer {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+}
+.footer a { color: var(--text-secondary); text-decoration: none; }
+.footer a:hover { color: var(--accent); }
+
+/* === Scrollbar (subtle) === */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--bg-hover); }
+
+/* === Selection === */
+::selection { background: var(--accent-dim); color: var(--text-primary); }
+
+/* === Anti-aliasing (mandatory for dark mode) === */
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>raycast — Project Journal</h1>
+        <div class="subtitle">
+            <a href="git@github.com:loudoguno/raycast">git@github.com:loudoguno/raycast</a>
+        </div>
+        <div class="header-meta">
+            <span>23 sessions</span>
+            <span>ee4d759</span>
+            <span>built 2026-04-10 14:26</span>
+        </div>
+    </div>
+
+    
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Raycast Burndown — Promptbox Issue #6 + Feedback-Loop Terminal Fix</span>
+                <span class="session-meta"><span class="meta-date">2026-04-10</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3 (MacBook Pro, Apple M3 Max, 128 GB)</span> <span class="meta-sep">/</span> <span class="meta-duration">~13 hours (overnight session, logged mid-day)</span> <span class="meta-sep">/</span> <span class="meta-agents">1 agents</span> <span class="meta-sep">/</span> <span class="meta-session">ec67d0fb</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">burndown</span><span class="tag">promptbox</span><span class="tag">feedback-loop</span><span class="tag">issue-fix</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Ran the raycast-burndown agent workflow against a single GitHub issue: #6 on the promptbox extension ("default view should show items with most recently edited at the top and not grouped by folder"). Fixed the view to be a flat sorted list and closed the issue. Also committed a pending fix to feedback-loop's terminal detection logic (Terminal.app path). Two branches remain unmerged to main.</p>
+<h2>What was accomplished</h2>
+<h3>Phase 0: Git Housekeeping</h3>
+<ul>
+<li>Committed pending `feedback-loop/src/lib/terminal.ts` change on `claude/refine-local-plan-HcDrL`</li>
+<li>Pushed, rebased on main, created `burn/promptbox-issue6-20260407-0138`</li>
+</ol>
+<h3>Phase 1: Fix feedback-loop terminal detection (commit 906b032)</h3>
+<ul>
+<li>`extensions/feedback-loop/src/lib/terminal.ts`: `getTerminalApp()` now checks full absolute paths</li>
+<li>Added `/System/Applications/Utilities/Terminal.app` as first check (correct macOS path)</li>
+<li>Old code only checked `/Applications/Terminal.app` which doesn't exist on macOS</li>
+<li>Committed on `claude/refine-local-plan-HcDrL`, pushed</li>
+</ol>
+<h3>Phase 2: Fix promptbox default view — issue #6 (commit 89bebd5)</h3>
+<ul>
+<li>`extensions/promptbox/src/browse-promptbox.tsx`</li>
+<li>**Removed** `STAGE_ORDER.map()` + `<List.Section>` grouping</li>
+<li>**Added** `sortedPrompts` — flat array of all prompts sorted by `updated` desc</li>
+<li>**Added** stage tag accessory `{ tag: { value: p.stage, color } }` — replaces the section header for stage identification</li>
+<li>Build passed, committed, branch pushed</li>
+<li>GitHub issue #6 commented and closed</li>
+</ol>
+<h2>Key decisions</h2>
+<ol>
+<li>**Add stage tag accessory** — Without sections, users lose the visual folder context. Added a colored pill tag showing `inbox`/`wip`/`outbox`/`complete` inline on each item. The icon tintColor already conveys stage, but the text tag makes it explicit and searchable.</li>
+</ol>
+<ol>
+<li>**Use string comparison for ISO dates** — `updated` field is a YYYY-MM-DD string. Lexicographic comparison is correct for ISO dates. Items without `updated` get `""` and sink to the bottom.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>Modified: `extensions/feedback-loop/src/lib/terminal.ts` (terminal path detection)</li>
+<li>Modified: `extensions/promptbox/src/browse-promptbox.tsx` (flat sorted view)</li>
+</ol>
+<h2>Open issues</h2>
+<ul>
+<li>**CRITICAL**: `browse-promptbox.tsx` was reverted after the burn branch commit (system-reminder from linter/manual edit). The fix is on `burn/promptbox-issue6-20260407-0138` at commit `89bebd5` but **has NOT been merged to main**. GitHub issue #6 is closed but the actual code may not be live on main.</li>
+<li>`claude/refine-local-plan-HcDrL` is unmerged — has the terminal.ts fix</li>
+<li>50 doc drift items in PAI doc review queue (unrelated but worth addressing)</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>**Branch state**: `burn/promptbox-issue6-20260407-0138` has the working promptbox fix. Main does NOT have it. Do `git merge burn/promptbox-issue6-20260407-0138` to apply it.</li>
+<li>**Verify the fix is intact**: Before merging, check that `browse-promptbox.tsx` on the burn branch still has the flat `sortedPrompts` render (not the `STAGE_ORDER.map` + `List.Section` version). The file was reverted on the working tree at session end.</li>
+<li>**Build required after merge**: `cd extensions/promptbox && npm run build`</li>
+<li>**Terminal detection fix**: Is already on `claude/refine-local-plan-HcDrL`. Cherry-pick commit `906b032` to main if that branch isn't being merged: `git cherry-pick 906b032`</li>
+<li>**promptbox architecture**: Prompts live as markdown files with gray-matter frontmatter in stage-named directories. `STAGE_DIRS` in `lib/constants.ts` maps stage names to paths. Moving prompts = rewriting frontmatter + moving file.</li>
+<li>**Issue tracking**: GitHub Issues on `loudoguno/raycast` with labels `feedback`, `ext:<package-name>`. Burn agent = `~/.claude/agents/raycast-burndown.md`</li>
+<li>**OmniFocus task created**: "Raycast: Merge promptbox #6 fix + resolve open branches" was added to the `~/code/raycast/ (extensions and scripts)` project with full context notes.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Raycast Feedback Loop Extension & Burndown Agent</span>
+                <span class="session-meta"><span class="meta-date">2026-04-08</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3 (MacBook Pro, Apple M3 Max, 128 GB)</span> <span class="meta-sep">/</span> <span class="meta-duration">~6 hours (multi-day: Apr 5-8)</span> <span class="meta-sep">/</span> <span class="meta-agents">18 agents</span> <span class="meta-sep">/</span> <span class="meta-session">93aa560d</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">feedback-loop</span><span class="tag">burndown-agent</span><span class="tag">github-issues</span><span class="tag">cicd</span><span class="tag">agents</span><span class="tag">council-debate</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Built a complete feedback-to-fix loop for the Raycast monorepo: a "User Feedback Loop" Raycast extension (Submit Feedback + Burn Backlog commands) and a persistent Claude Code burndown agent (<code class="inline">.claude/agents/raycast-burndown.md</code>). Included a 5-expert council debate that drove six key architecture decisions, plus deep research into Claude Code headless billing, PAI persistent agents, and multi-agent orchestration.</p>
+<h2>What was accomplished</h2>
+<h3>Phase 1: Planning & Council Debate</h3>
+<ul>
+<li>Ran PAI Algorithm v3.7.0 with Advanced effort tier (35 ISC criteria)</li>
+<li>FirstPrinciples decomposition: identified 6 atomic subsystems, 10 failure modes, 4 parallelism opportunities</li>
+<li>5-expert council debate (3 rounds, 15 agents total):</li>
+<li>Rex (Raycast Extension Expert): Identified 3-tier extension health triage</li>
+<li>Maki (Scripting Expert): Proposed pre-commit sync guard (eventually deferred to v2)</li>
+<li>Tara (TypeScript/React Expert): Found the @raycast/utils v1/v2 split landmine</li>
+<li>Ciro (CICD Specialist): Designed async completion sentinel pattern</li>
+<li>Algo (PAI Algorithm Expert): Identified SHOWSTOPPER — Raycast kills child_process, must use osascript Terminal launch</li>
+<li>IterativeDepth analysis (8 lenses) on the "Burn" UX flow — resulted in two-phase triage→execute model</li>
+</ol>
+<h3>Phase 2: Architecture Simplification</h3>
+<ul>
+<li>Original plan: shared code synced to 18 extensions (90 copied files, sync script, ActionPanel wiring)</li>
+<li>Web Claude Code session redesigned as single standalone extension — zero integration points</li>
+<li>Pulled down `claude/refine-local-plan-HcDrL` branch with working code</li>
+</ol>
+<h3>Phase 3: Implementation</h3>
+<ul>
+<li>Built and verified `extensions/feedback-loop/` (npm install + npm run build passes)</li>
+<li>Created 23 GitHub labels on `loudoguno/raycast` via gh CLI</li>
+<li>Updated CLAUDE.md with extension overview + full architectural section</li>
+<li>Created `.claude/agents/raycast-burndown.md` persistent agent definition</li>
+<li>Updated `burn-backlog.tsx` with three burn levels (single issue, extension, all)</li>
+<li>Wrote README.md for the extension</li>
+</ol>
+<h3>Phase 4: Research</h3>
+<ul>
+<li>Confirmed Claude Code headless (`-p`) uses Max subscription, NOT API billing</li>
+<li>Mapped Claude Code agents architecture: `.claude/agents/*.md`, `--agent` flag, subagents, teams</li>
+<li>Researched PAI ComposeAgent system for custom persistent agents with traits/voices</li>
+</ol>
+<h2>Key decisions</h2>
+<ol>
+<li>**Single extension, not shared code** — The web session's approach of one standalone `feedback-loop` extension eliminated the entire shared code infrastructure (sync script, per-extension wiring, 90 copied files). Massive simplification.</li>
+</ol>
+<ol>
+<li>**osascript Terminal launch, not child_process** — Council unanimously agreed (5-0). Raycast GCs child processes after command exit. Pattern proven in `extensions/claude-built/src/execute.ts`.</li>
+</ol>
+<ol>
+<li>**Interactive mode, not headless** — User wants to check in on progress and answer agent questions. Interactive Terminal session is the right UX.</li>
+</ol>
+<ol>
+<li>**Custom agent file, not PAI algorithm** — `.claude/agents/raycast-burndown.md` is simpler than PRD-based algorithm.ts loop mode for issue-sized work. Agent has the same triage/execute/verify pattern without the ceremony.</li>
+</ol>
+<ol>
+<li>**Raycast preferences for PAT, not file-based** — `getPreferenceValues<{githubToken: string}>()` is Raycast-native. Avoids managing `~/.config/raycast/github-pat` file.</li>
+</ol>
+<ol>
+<li>**Three burn levels from one agent** — Same agent definition, different scope in the prompt. Simplest possible dispatch.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/feedback-loop/` — entire extension (package.json, tsconfig, eslint config, 6 source files, README)</li>
+<li>`.claude/agents/raycast-burndown.md` — persistent burndown agent (4-phase workflow)</li>
+<li>`Plans/feedback-loop-remaining-tasks.md` — implementation plan from web session</li>
+<li>`Plans/breezy-hatching-valiant.md` — original council-informed plan (historical reference)</li>
+<li>23 GitHub labels on `loudoguno/raycast` repo</li>
+</ol>
+<h2>Open issues</h2>
+<ul>
+<li>Three burn levels not yet tested end-to-end with the burndown agent</li>
+<li>Burndown agent's git housekeeping phase (Phase 0) not yet exercised in real use</li>
+<li>Extensions missing node_modules (beads, claude-built, Search_Status_Menu) may need `npm install` before burndown agent can build them</li>
+<li>`auto` permission mode requires Team/Enterprise plan — agent runs with default permissions, requiring user approval for each tool call. `acceptEdits` is the practical alternative on Max.</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>**Read CLAUDE.md first** — it has the full architecture for all 19 extensions including the feedback-loop</li>
+<li>**The burndown agent is at `.claude/agents/raycast-burndown.md`** — Claude Code auto-discovers it. Launch with `claude --agent raycast-burndown`</li>
+<li>**Package.json names differ from directory names** for 3 extensions: omnifocus→omnifocus-custom, RoamResearch→roam-research-custom, Search_Status_Menu→search-status-menu. GitHub labels use package.json names.</li>
+<li>**@raycast/utils v1/v2 split** — 12 extensions on v1 (React 18), 3 on v2 (React 19). Never import from `@raycast/utils` in shared or cross-extension code.</li>
+<li>**Terminal launch pattern** — `executeInTerminal()` in `extensions/feedback-loop/src/lib/terminal.ts` uses osascript with `getTerminalApp()` detecting Ghostty/iTerm/Terminal. Adapted from `extensions/claude-built/src/execute.ts`.</li>
+<li>**The original plan** at `Plans/breezy-hatching-valiant.md` has the full council debate findings and 35 ISC criteria. Most of the architecture decisions there still apply even though the implementation was simplified.</li>
+<li>**v2 roadmap** is documented in CLAUDE.md: AI triage, Beads integration, per-extension ActionPanel shortcuts, multi-provider CLI fallback.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Universal Copy Link Documentation + Project Journal Bootstrap</span>
+                <span class="session-meta"><span class="meta-date">2026-03-27</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb (MacBook Pro, M1 Max, 64 GB)</span> <span class="meta-sep">/</span> <span class="meta-duration">~12 hours (intermittent, left terminal open)</span> <span class="meta-sep">/</span> <span class="meta-agents">3 agents</span> <span class="meta-sep">/</span> <span class="meta-session">bc007fa5</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">docs</span><span class="tag">universal-copy-link</span><span class="tag">beads</span><span class="tag">journal</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Created comprehensive two-document README set for the Universal Copy Link extension, then created a 16-issue beads epic for documenting all other extensions. Finally, bootstrapped the project journal system (<code class="inline">.journal/</code>) with backfilled entries from git history and CloudClaude journal entries.</p>
+<h2>What was accomplished</h2>
+<h3>Phase 1: Universal Copy Link Documentation</h3>
+<p>Wrote two documents totaling ~960 lines:</p>
+<ul>
+<li>**README.md** (500+ lines) — complete reference covering architecture (with mermaid diagram), all 5 execution strategies, multi-format clipboard pipeline (markdown + RTF + HTML via NSPasteboard), Claude Code session detection, bundle ID alias system, accessibility fallback, extensibility guide with step-by-step Logseq example, origin story, design decisions, known limitations, and file reference table.</li>
+</ol>
+<ul>
+<li>**SUPPORTED-APPS.md** (400+ lines) — reference table of all 57 supported apps (58 handler entries) grouped by tier: 8 browsers, 11 Tier 1 daily use, 11 Tier 2 regular, 20 Tier 3 carried from KM, 6 Hookmark-inspired, 1 terminal. Each entry shows bundle ID, strategy, URL type, and example link.</li>
+</ol>
+<h3>Phase 2: Documentation Epic</h3>
+<p>Created beads epic <code class="inline">raycast-mg5</code> with 16 child issues, each containing a self-contained agent prompt:</p>
+<ul>
+<li>P1 (4): Claude Sessions, OmniFocus, RoamResearch, Search Status Menu</li>
+<li>P2 (3): Claude Usage upgrade, Beads, LouTools Remote</li>
+<li>P3 (6): Balloons x2, Claude Built, Contextual Cheatsheet, Git Repos, Session Launcher</li>
+<li>P4 (3): Finder Actions, Machine Sync, Typing Practice</li>
+</ol>
+<h3>Phase 3: Project Journal Bootstrap</h3>
+<p>Created <code class="inline">.journal/</code> directory with <code class="inline">build.py</code> HTML viewer and backfilled entries from:</p>
+<ul>
+<li>Git history (69 commits across 22 dates)</li>
+<li>31 existing CloudClaude journal entries mentioning raycast</li>
+<li>3 parallel agents: early-history (git-only), march-entries (CloudClaude adaptation), build-viewer (HTML dashboard)</li>
+</ol>
+<h2>Key decisions</h2>
+<ol>
+<li>**Two-document split for UCL** — README stays navigable, SUPPORTED-APPS.md gives exhaustive app reference. Better than one massive file.</li>
+<li>**Beads for issue tracking** — Used `bd create` with rich descriptions containing agent-ready prompts, so any future session can `bd show raycast-mg5.N` and immediately start writing docs.</li>
+<li>**Journal backfill strategy** — Mine CloudClaude entries (rich narratives already written) + supplement with git-reconstructed entries for dates without journal coverage. Early entries marked as reconstructed.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/universal-copy-link/README.md` — comprehensive extension documentation</li>
+<li>`extensions/universal-copy-link/SUPPORTED-APPS.md` — all 57 supported apps reference</li>
+<li>`.journal/sessions/` — project journal directory with backfilled entries</li>
+<li>`.journal/build.py` — HTML dashboard generator for project journal</li>
+</ol>
+<h2>Open issues</h2>
+<ul>
+<li>Documentation epic `raycast-mg5` has 16 open issues to work through</li>
+<li>OmniFocus task `opHlG9FFYwn` tracks the documentation work</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>**Universal Copy Link README quality** is the gold standard for this repo's extension documentation. Reference it when writing READMEs for other extensions: `extensions/universal-copy-link/README.md`</li>
+<li>**The documentation epic** lives in beads: `bd children raycast-mg5` shows all 16 issues. Each child issue contains a complete agent prompt with extension-specific architecture details.</li>
+<li>**This project journal** was bootstrapped in this session. Early entries (pre-March 2026) are reconstructed from git and marked as such. March 2026+ entries are adapted from CloudClaude journal entries with richer context.</li>
+<li>**CLAUDE.md** is the architectural source of truth for all extensions. It has detailed sections on each extension's architecture, commands, patterns, and gotchas.</li>
+<li>**The repo has two machines**: mxb (MacBook Pro M1 Max) and mx3 (MacBook Pro M3). Some extensions were built on one and synced to the other via git.</li>
+<li>**How to resume**: `cd ~/code/raycast && claude --resume bc007fa5`</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Claude Sessions Fixes + Search Status Menu Build + Universal Copy Link Review + Beads Extension</span>
+                <span class="session-meta"><span class="meta-date">2026-03-23</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated 12h+</span> <span class="meta-sep">/</span> <span class="meta-session">ec782dc5</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">claude-sessions</span><span class="tag">search-status-menu</span><span class="tag">universal-copy-link</span><span class="tag">beads</span><span class="tag">big-day</span><span class="tag">swift</span><span class="tag">accessibility-api</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>The biggest day in the repo's history. Fixed 3 bugs in Claude Sessions, built Search Status Menu from scratch (Swift helper + Raycast UI), reviewed and cleaned up Universal Copy Link (produced by a headless Claude session), and built a complete 6-command Beads extension. Also committed, documented, and pushed everything.</p>
+<h2>What was accomplished</h2>
+<h3>1. Claude Sessions Extension Fixes</h3>
+<p><strong>Bug 1: Session names not displaying.</strong> The AppleScript reading Terminal.app tab titles used <code class="inline">repeat with t in tabList</code> which silently fails with many windows (19 in Lou's case). Fixed with index-based iteration.</p>
+<p><strong>Bug 2: All paths showing "unknown".</strong> Claude Code's JSONL format changed -- first line is now <code class="inline">queue-operation</code> with no <code class="inline">cwd</code> field (was <code class="inline">system/init</code> with <code class="inline">cwd</code>). Fixed by scanning up to 20 lines for <code class="inline">cwd</code>, with fallback to decoding the project folder name (e.g., <code class="inline">-Users-loudog-code-raycast</code> decodes to <code class="inline">/Users/loudog/code/raycast</code>).</p>
+<p><strong>Bug 3: Session matching too narrow.</strong> Time-based matching only looked forward with 300s window. Widened to 600s bidirectional using <code class="inline">Math.abs()</code>.</p>
+<p><strong>New feature: Remote control URL actions.</strong> Two new actions: Copy Remote Control URL (<code class="inline">Cmd+Shift+R</code>) and Copy Remote Control Formatted Link (<code class="inline">Cmd+Option+R</code>). Also added purple TV badge for sessions with active remote control, and a "Connect Remote Control" action that switches to the terminal and runs <code class="inline">/remote-control</code>.</p>
+<h3>2. Search Status Menu Extension (full build)</h3>
+<p>Built from the PRD created on 03-22. Two halves:</p>
+<ul>
+<li>**Swift CLI helper** (`status-menu-helper`): Universal binary using macOS Accessibility API (`AXExtrasMenuBar`) to enumerate all menu bar extras and CGEvent posting for clicks</li>
+<li>**TypeScript Raycast extension**: List view with fuzzy search, Return = left-click, Cmd+Return = right-click</li>
+</ol>
+<p>Scan flow: Swift binary iterates <code class="inline">NSWorkspace.shared.runningApplications</code>, queries <code class="inline">AXExtrasMenuBar</code> for each, returns JSON. TypeScript deduplicates (e.g., ~30 "Control Center" entries collapse to 1) and caches via <code class="inline">useCachedPromise</code>.</p>
+<p>Click flow: <code class="inline">closeMainWindow()</code> dismisses Raycast, 150ms delay, Swift helper posts CGEvent mouseDown + 50ms + mouseUp at item center coordinates.</p>
+<h3>3. Universal Copy Link Review + Cleanup</h3>
+<p>This extension was originally created by a headless (non-interactive) Claude session as "copy-link". First human review:</p>
+<ul>
+<li>Renamed: copy-link -> Linkmark (briefly) -> Universal Copy Link</li>
+<li>Removed 38 dead standalone `.applescript` files (duplicates of scripts inlined in `src/scripts/index.ts`)</li>
+<li>Removed headless artifacts (`PRD.md` at 45KB, `Plans/` directory)</li>
+<li>Added missing `eslint.config.mjs`</li>
+<li>Fixed unused variables in `menu-command.ts`</li>
+<li>Fixed Prettier formatting across 6 files</li>
+</ol>
+<p>Architecture: strategy pattern with router (NSWorkspace frontmost app detection) -> alias resolution (Setapp/MAS variants) -> handler registry (40+ bundle IDs) -> strategy execution (browser, applescript, accessibility, menu-command, shell) -> multi-format clipboard (markdown + RTF + HTML via NSPasteboard).</p>
+<h3>4. Beads Raycast Extension (full build)</h3>
+<p>Complete 6-command extension wrapping the <code class="inline">bd</code> CLI:</p>
+<ul>
+<li>**Beads Dashboard** -- cross-project mission control (ready/in-progress/blocked/closed)</li>
+<li>**Create Bead** -- form with project picker, type, priority, description</li>
+<li>**What's Next?** -- no-view instant clipboard copy of top priority item</li>
+<li>**Search Beads** -- full-text search across all beads-enabled projects</li>
+<li>**Project Overview** -- single project deep-dive with stats and "Landing the Plane" checklist</li>
+<li>**Menu Bar Status** -- persistent indicator with ready count and auto-refresh</li>
+</ol>
+<p>Educational content woven throughout: tooltips, empty states, and a getting-started guide inspired by Steve Yegge's beads philosophy.</p>
+<h3>5. Final Commit + Push</h3>
+<p>Coordinated with parallel agents. Grouped into logical commits, updated CLAUDE.md and README.md to reflect all 13 extensions in the repo, added <code class="inline">lous-workspace/</code> to <code class="inline">.gitignore</code>, pushed everything.</p>
+<h2>Key decisions</h2>
+<ul>
+<li>**Index-based AppleScript iteration** over for-each -- `repeat with t in tabList` silently fails with many Terminal windows. Index-based is more reliable.</li>
+<li>**Scan up to 20 JSONL lines** for CWD -- Claude Code's JSONL format is not stable (first-line schema changed). Defensive scanning is required.</li>
+<li>**Codesign AFTER copy** for Swift binary -- copying invalidates the signature, macOS SIGKILL's binaries with invalid signatures. Must codesign after the binary reaches its final location in `assets/`.</li>
+<li>**Sequential AX queries** -- attempted parallelizing with `DispatchQueue.concurrentPerform` but the binary was immediately SIGKILL'd (exit 137). AX API is not thread-safe.</li>
+<li>**`useCachedPromise` for status menu** -- shows stale results instantly on subsequent opens, big UX win for slow-to-scan data. Contrast with OmniFocus which uses `usePromise` (stale cache of completed tasks would be confusing).</li>
+<li>**Strategy pattern for Universal Copy Link** -- clean separation of concerns. Each app gets its own handler config, strategies are reusable across apps.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/claude-sessions/src/list-sessions.tsx` -- major rewrite (all 3 fixes + remote control)</li>
+<li>`extensions/Search_Status_Menu/` -- entire extension (12 files)</li>
+<li>`extensions/Search_Status_Menu/swift-helper/main.swift` -- AX scan + CGEvent click</li>
+<li>`extensions/Search_Status_Menu/assets/status-menu-helper` -- compiled universal binary</li>
+<li>`extensions/universal-copy-link/` -- cleaned up and committed (17 files, 1,565 lines)</li>
+<li>`extensions/beads/` -- entire extension (14 files, 6 commands)</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<h3>JSONL format instability (critical)</h3>
+<p>Claude Code's session JSONL format is not stable. The extension previously expected <code class="inline">type: "system", subtype: "init"</code> on the first line with a <code class="inline">cwd</code> field. It changed to <code class="inline">queue-operation</code> with no <code class="inline">cwd</code>. The current code scans up to 20 lines and also decodes the project folder name as a fallback. Expect this to break again -- build defensively.</p>
+<h3>Terminal.app AppleScript reliability</h3>
+<ul>
+<li>`repeat with t in tabList` silently fails with many windows. Always use index-based iteration.</li>
+<li>`name of tab` throws errors on macOS Tahoe. Only `custom title of tab` works.</li>
+<li>Custom titles include Claude status braille characters (`\u2810`). Strip via regex.</li>
+</ol>
+<h3>Swift helper codesigning</h3>
+<p>The Search Status Menu Swift binary must be codesigned AFTER being copied to its final location. The <code class="inline">build.sh</code> script handles this: compiles arm64 + x86_64, creates universal via <code class="inline">lipo</code>, codesigns with <code class="inline">-</code> (ad-hoc). If modifying the binary, always run <code class="inline">npm run build-helper</code> which handles the full pipeline.</p>
+<h3>AX API is not thread-safe</h3>
+<p>Do not parallelize AX queries. <code class="inline">DispatchQueue.concurrentPerform</code> causes immediate SIGKILL (exit 137). Sequential iteration over running apps is the only safe approach.</p>
+<h3>JXA is too slow for bulk AX queries</h3>
+<p>Attempted rewriting the status menu scanner in JXA as a fallback -- iterating all processes via System Events took 30+ seconds (thousands of Apple Event IPC calls). The Swift helper does it in ~200ms. This is why the extension uses a compiled binary rather than inline scripting.</p>
+<h3>React version alignment</h3>
+<p><code class="inline">@raycast/api</code> ^1.83 expects React 19 types. Must use <code class="inline">@types/react@19</code> (not 18.3.3) to avoid <code class="inline">TS2786</code> JSX errors. Some extensions work around this with <code class="inline">--skip-types</code> in their build scripts.</p>
+<h3>Bartender compatibility</h3>
+<p>Items hidden by Bartender have negative X positions. They still appear in the Search Status Menu list -- this is a feature, not a bug. You can click hidden items even when Bartender has them collapsed.</p>
+<h3>Control Center limitation</h3>
+<p>macOS Ventura+ bundles Wi-Fi/Bluetooth/Sound into a single "Control Center" status item. The scanner reports ~30 separate entries with zero size at position (0, 1125) -- all off-screen. Deduplication collapses these to one.</p>
+<h3>Universal Copy Link -- untested AppleScripts</h3>
+<p>The 30+ app-specific AppleScripts in <code class="inline">scripts/index.ts</code> were generated by a headless session. They may need per-app testing and tweaking. The accessibility strategy (AXTitle + AXDocument) serves as a universal fallback for unregistered or broken apps.</p>
+<h3>Beads Dolt server persistence</h3>
+<p>Dolt servers die between shell sessions. Every terminal restart or new day requires <code class="inline">bd dolt start</code> in each beads-enabled project. This is the biggest friction point. A launchd plist to auto-start would fix it permanently but hasn't been created yet.</p>
+<h3>State of repo after this day</h3>
+<p>13 extensions total in the repo. All committed and pushed. CLAUDE.md and README.md updated. The repo is clean. On mx3, <code class="inline">git pull</code> would be needed, plus building/registering all new extensions.</p></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Open Loops Triage + Status Menu Search Planning + LouTools Reconciliation</span>
+                <span class="session-meta"><span class="meta-date">2026-03-22</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated 6h</span> <span class="meta-sep">/</span> <span class="meta-session">f141a5f4</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">triage</span><span class="tag">beads</span><span class="tag">status-menu-search</span><span class="tag">planning</span><span class="tag">repo-reconciliation</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>A cognitive offload session that captured all of Lou's open loops from 14 apps and 10 Terminal sessions into persistent documents, followed by planning the Search Status Menu extension and rescuing the LouTools repo on mxb (which turned out to not be a git repo at all).</p>
+<h2>What was accomplished</h2>
+<h3>Open Loops Terminal Session Audit</h3>
+<p>Scanned 14 open apps via AppleScript, read all 10 Stickies (via container RTF files), captured 5 Chrome tabs, and discovered 10 active Claude Code terminal sessions. Key findings:</p>
+<ul>
+<li>Some sessions running 24+ hours (keybindings) and 2+ days (filesystem-agent)</li>
+<li>Real open loops were in terminal sessions, not stickies</li>
+<li>Produced `lous-workspace/outputs/open-loops-2026-03-22.md`</li>
+</ol>
+<h3>Search Status Menu Planning</h3>
+<p>Created research and planning docs for a new extension:</p>
+<ul>
+<li>**LouTools research spec** covering AXUIElement menu bar scanning, CGEvent click simulation</li>
+<li>**Raycast extension PRD** at `extensions/Search_Status_Menu/PRD.md`</li>
+<li>Key architectural insight: build a small Swift helper binary that enumerates status items as JSON. This binary can be shared between both the Raycast extension and a future LouTools module.</li>
+</ol>
+<p>Three macOS API tiers evaluated:</p>
+<ol>
+<li>**AXUIElement** (primary) -- enumerate menu bar items via `AXExtrasMenuBar`</li>
+<li>**CGEvent** (fallback) -- simulate mouse clicks at item positions</li>
+<li>**NSStatusBar** (supplemental) -- limited to own-process items, not useful</li>
+</ol>
+<p>Known limitation: macOS Ventura+ bundles Wi-Fi/Bluetooth/Sound into a single "Control Center" status item; sub-items aren't separately addressable.</p>
+<h3>LouTools Repo Reconciliation</h3>
+<p>Discovered <code class="inline">~/code/LouTools</code> on mxb was NOT a git repo -- just a plain directory from a March 13 session. The actual git repo lived on GitHub with one commit from mx3. Reconciled by cloning the real repo, copying mxb-only files in, committing, and pushing.</p>
+<p>Also initialized beads in both the LouTools repo and ran a health check (8 findings under epic <code class="inline">LouTools-dif</code>).</p>
+<h2>Key decisions</h2>
+<ul>
+<li>**Swift helper binary approach** for status menu -- AX API is fast (~200ms) when called from a compiled Swift binary. JXA/AppleScript is too slow (~30+ seconds for bulk AX queries due to thousands of Apple Event IPC calls). This decision proved correct when the extension was built the next day.</li>
+<li>**Universal binary** (arm64 + x86_64) for the Swift helper so it works on both machines without recompilation.</li>
+<li>**Beads credential key in `.gitignore`** -- `bd init` commits a credential key to git by default. Caught in the health check and added `.beads/.beads-credential-key` to `.gitignore`.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/Search_Status_Menu/PRD.md` -- buildable Raycast extension PRD</li>
+<li>`lous-workspace/outputs/open-loops-2026-03-22.md` -- captured open loops</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<h3>Sandbox anchoring warning</h3>
+<p>When you <code class="inline">mv</code> or <code class="inline">rm</code> the directory that Claude Code's sandbox is anchored to, all subsequent Bash commands fail. Happened during this session when trying to replace the LouTools directory. Had to ask Lou to run commands manually. Never move the working directory mid-session.</p>
+<h3>LouTools vs extensions/loutools</h3>
+<ul>
+<li>`~/code/LouTools/` -- the Swift monorepo (CLI binary, adapters, core modules)</li>
+<li>`~/code/raycast/extensions/loutools/` -- the Raycast extension (thin shell-out to the CLI)</li>
+<li>These are completely separate. Don't conflate them.</li>
+</ol>
+<h3>Lou's tab accumulation pattern</h3>
+<p>Lou opens new terminal tabs for each rabbit hole, each with its own Claude Code session, creating nested context that's hard to unwind. The 10-session finding from this date was typical. The Claude Sessions extension was built partly to address this visibility problem.</p>
+<h3>`bd init` caution</h3>
+<p>Always check <code class="inline">.gitignore</code> after <code class="inline">bd init</code> -- it creates a credential key that shouldn't be committed. Add <code class="inline">.beads/.beads-credential-key</code> to <code class="inline">.gitignore</code> immediately.</p></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Roam Extension mxb Setup + Multi-Machine Sync + Contextual Cheatsheet Discovery</span>
+                <span class="session-meta"><span class="meta-date">2026-03-21</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated 4h</span> <span class="meta-sep">/</span> <span class="meta-session">82fa1f94</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">roam-research</span><span class="tag">mxb-setup</span><span class="tag">multi-machine</span><span class="tag">contextual-cheatsheet</span><span class="tag">loutools</span><span class="tag">sync</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Two related sessions on mxb: (1) Fixed the <code class="inline">/+r</code> Roam Research keybinding by building and registering the extension on mxb, and (2) hunted down the "lost" contextual-cheatsheet extension on mx3, synced it via git, and discovered the multi-machine registration gap for Raycast dev extensions.</p>
+<h2>What was accomplished</h2>
+<h3>Roam Research Extension on mxb</h3>
+<p>The <code class="inline">/+r</code> keybinding (Karabiner slash-mode) was pointing to a Raycast deeplink (<code class="inline">raycast://extensions/loudog/roam-research-custom/search</code>) but the extension had never been built on mxb. Fixed by:</p>
+<ol>
+<li>Installing `@raycast/api` CLI globally (`npm install -g @raycast/api`)</li>
+<li>Running `ray develop` headlessly from Claude Code</li>
+<li>Verified the deeplink fired successfully</li>
+</ol>
+<h3>Contextual Cheatsheet Discovery</h3>
+<p>Lou was looking for an extension he'd built that detects the frontmost app and opens an associated cheatsheet. It wasn't committed. After searching the repo, GitHub, PAI memory, iCloud, and keybindings repo without finding it, SSH'd to mx3 (via <code class="inline">mx3.local</code> -- Tailscale <code class="inline">mx3</code> timed out) and found <code class="inline">extensions/contextual-cheatsheet/</code> untracked.</p>
+<p>The contextual-cheatsheet extension uses a 4-tier resolution: custom URL (per-app via LocalStorage) > vault cheatsheet.md > vault main note > setup prompt. An <code class="inline">app-mapping.json</code> maps bundle IDs to vault filenames.</p>
+<h3>Multi-Machine Sync</h3>
+<ol>
+<li>Committed both untracked extensions on mx3 (contextual-cheatsheet + loutools)</li>
+<li>Rebased mx3 onto origin/main (was 4 behind)</li>
+<li>Fixed mx3's git remote from HTTPS to SSH (HTTPS auth was broken)</li>
+<li>Pushed from mx3, pulled on mxb</li>
+<li>Built RoamResearch on mxb (`npm install` + `npm run build`)</li>
+</ol>
+<h2>Key decisions</h2>
+<ul>
+<li>**`ray develop` for registration** -- works headlessly from a non-interactive terminal. But it's a long-running process and the extension may disappear from Raycast when it dies. `ray build` might be more permanent but wasn't tested.</li>
+<li>**SSH remote over HTTPS** -- mx3's HTTPS auth was broken ("Device not configured"). Switched to `git@github.com:loudoguno/raycast.git` which worked immediately.</li>
+<li>**`.local` for local network SSH** -- `mx3` (Tailscale) timed out. `mx3.local` (mDNS) worked when both machines are on the same network.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>No new files in this repo on this date (commits were on the 03-20 date via mx3 rebase/push)</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<h3>Per-machine extension registration is the #1 multi-machine friction point</h3>
+<p>Raycast dev extensions require explicit build + registration on each machine. A <code class="inline">git pull</code> only gets the source. The registration step varies:</p>
+<ul>
+<li>`npm install && npm run dev` -- starts dev server with hot reload, extension persists after stopping (usually)</li>
+<li>`ray develop` -- headless alternative, works from CLI</li>
+<li>`npm run build` alone -- compiles but does NOT register with Raycast</li>
+</ol>
+<p>The post-merge hook (<code class="inline">hooks/post-merge</code>) handles <code class="inline">npm run build</code> automatically on <code class="inline">git pull</code>, but that only compiles -- it doesn't guarantee Raycast picks up new extensions. New extensions need <code class="inline">npm run dev</code> at least once.</p>
+<h3>Contextual cheatsheet extension architecture</h3>
+<ul>
+<li>`src/cheatsheet-store.ts` -- core: `getFrontmostApplication()`, 4-tier resolution</li>
+<li>Depends on `~/vaults/flote-vault/` for vault-based resolution -- this may not exist on all machines</li>
+<li>`app-mapping.json` at `~/vaults/flote-vault/_ADMIN/` maps bundle IDs to vault filenames</li>
+</ol>
+<h3>`hyperfloat` red herring</h3>
+<p>An old scaffolded extension in <code class="inline">~/.config/raycast/extensions/hyperfloat/</code> has a similar concept (contextual floating notes) but only contains a <code class="inline">package.json</code> with no source code. Not the same project.</p>
+<h3>RoamResearch "missing" source files</h3>
+<p>After this session, Lou thought the RoamResearch source was missing from mxb. It was actually identical on both machines -- only build artifacts (<code class="inline">node_modules</code>/<code class="inline">dist</code>) were missing. The <code class="inline">.gitignore</code> correctly excludes these.</p></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">OmniFocus Brain Dump Triage + Copy Link Research</span>
+                <span class="session-meta"><span class="meta-date">2026-03-20</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated 4h (split across API outage)</span> <span class="meta-sep">/</span> <span class="meta-session">0fee56fa</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">omnifocus</span><span class="tag">agents</span><span class="tag">triage</span><span class="tag">copy-link-research</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Lou had been aggressively brain-dumping into OmniFocus for days and felt overwhelmed. Deployed 6 parallel research agents to triage ~90 recent OmniFocus items, answer questions, and do preliminary research. One agent produced a 682-line technical doc on per-app URL extraction methods for 9 apps -- this directly informed the later Universal Copy Link extension build.</p>
+<h2>What was accomplished</h2>
+<h3>Agent Triage of OmniFocus Items</h3>
+<p>Pulled all ~90 OmniFocus items from the last 3 days via JXA, launched 6 parallel agents:</p>
+<ol>
+<li>**PAI/Claude Code Questions Agent** -- answered 12 questions by reading PAI source files</li>
+<li>**Memory System Deep Dive** -- resolved 7 questions about Claude memory behavior</li>
+<li>**Wispr Flow Research** -- found Wispr Flow has no API/SDK (recommended Raycast extension approach)</li>
+<li>**Agentic Knowledge Base** -- compared Obsidian vs Logseq for agent-managed KBs (winner: Obsidian in git)</li>
+<li>**Copy Link Everywhere** -- documented per-app URL extraction for 9 apps (OmniFocus, Finder, Obsidian, VS Code, Bear, Notion, Roam, Terminal). This 682-line doc became the blueprint for Universal Copy Link.</li>
+<li>**OmniFocus Extension Review** -- code reviewed the omnifocus extension, scoped 4 improvements</li>
+</ol>
+<p>Produced an HTML triage report at <code class="inline">lous-workspace/outputs/omnifocus-triage-report.html</code>.</p>
+<h3>Also committed on this date</h3>
+<p>The contextual-cheatsheet and loutools Raycast extensions were committed from mx3 (commit 32ea09d), catching up previously untracked work from the 03-21 sync session.</p>
+<h2>Key decisions</h2>
+<ul>
+<li>**OmniFocus inbox convention established** -- `Inbox for Claude` (folder + project) in OmniFocus for actionable work. Items elsewhere are input/research only.</li>
+<li>**Read-only triage** -- agents only read from OmniFocus, never wrote back. Biggest gap identified for future improvement.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`lous-workspace/outputs/omnifocus-triage-report.html` -- full triage report (print-ready)</li>
+<li>`lous-workspace/outputs/copy-link-research.md` -- per-app Copy Link technical approaches (682 lines)</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<h3>Copy Link research output informed Universal Copy Link</h3>
+<p>The 682-line <code class="inline">copy-link-research.md</code> doc documented how to extract URLs and titles from 9+ macOS apps. This became the foundation for the Universal Copy Link extension built on 03-23. Key finding: most apps either have AppleScript dictionaries for getting document URLs, or you can use Accessibility API (AXTitle + AXDocument) as a universal fallback.</p>
+<h3>Working directory warning</h3>
+<p>This session started in the iCloud parent folder instead of the <code class="inline">agentic-inbox/</code> subdirectory. Future triage sessions should run from <code class="inline">agentic-inbox/</code> to get correct project context.</p>
+<h3>API crash resilience lesson</h3>
+<p>The Anthropic API went down mid-session before the HTML report could be generated. Agent output was ephemeral (in <code class="inline">/private/tmp/</code>). Lesson: produce durable artifacts (HTML, written files) EARLY and incrementally, not as a final step.</p>
+<h3>OmniFocus screenshot limitation</h3>
+<p>Tasks with image attachments showed as <code class="inline">&#xFFFC;</code> in JSON output. The Omni Automation base64 extraction method exists (<code class="inline">att.contents.toBase64()</code>) but wasn't used in the triage flow. Would need explicit handling for image-bearing tasks.</p></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">mxb Setup + Git Housekeeping</span>
+                <span class="session-meta"><span class="meta-date">2026-03-18</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated full day</span> <span class="meta-sep">/</span> <span class="meta-session">multiple</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">mxb-setup</span><span class="tag">git</span><span class="tag">housekeeping</span><span class="tag">omnifocus</span><span class="tag">hammerspoon</span><span class="tag">cross-machine</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Migrated OmniFocus automations (Raycast extension + Move Quickly) from mx3 to mxb, installed Hammerspoon, and committed ~22 days of accumulated git changes across the repo organized into 4 logical commits.</p>
+<h2>What was accomplished</h2>
+<h3>OmniFocus Migration to mxb</h3>
+<ul>
+<li>Pulled 5 new OmniFocus extension commits from mx3 via git</li>
+<li>Copied Move Quickly automation from mx3 (`~/flotes/apps/OmniFocus/MoveQuickly/`) to mxb (`~/Dropbox/Sync/OmniFocus/MoveQuickly/`). Move Quickly is a shell + JXA + Swift fuzzy picker system that lets you press `Shift+Cmd+M` in OmniFocus to fuzzy-search a destination and move selected items there.</li>
+<li>Compiled the Swift fuzzy picker binary on mxb (`build.sh`)</li>
+<li>Installed Hammerspoon on mxb with full mx3 config (window management, LouTools remote, Move Quickly keybinding)</li>
+</ol>
+<h3>Git Housekeeping</h3>
+<p>Committed ~22 days of accumulated changes into 4 logical commits:</p>
+<ol>
+<li>ESLint configs and extension icons for newer extensions</li>
+<li>Lint-format and clean up unused vars across 5 extensions (705+/179- lines, mostly formatting)</li>
+<li>Raycast script commands for keybindings, mission control, and TTS summary</li>
+<li>Fabric system dashboard documentation</li>
+</ol>
+<p>The <code class="inline">machine-sync</code> extension had the biggest formatting delta -- 548 lines of compressed code expanded by the linter.</p>
+<h2>Key decisions</h2>
+<ul>
+<li>**Dropbox for Move Quickly sync** -- the source files (shell script, JXA, Swift) sync via Dropbox between machines. The compiled binary in `bin/` must be rebuilt per machine.</li>
+<li>**Hammerspoon for Move Quickly keybinding** -- initially tried Automator Quick Action with `pbs` defaults, but that's unreliable on modern macOS. Checking mx3 revealed Hammerspoon was the actual mechanism.</li>
+<li>**Logical commit grouping** -- rather than one giant commit, organized 22 days of changes by concern (configs, formatting, scripts, docs).</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/{5 extensions}/.eslintrc.json` -- standard ESLint configs</li>
+<li>`scripts/keybinding-cheatsheet.sh`, `scripts/pai/open-mission-control.sh`, `scripts/summarize-selected-text-and-speak.sh` -- new Raycast script commands</li>
+<li>`extensions/docs/fabric-dashboard.html` -- interactive dashboard</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<h3>Move Quickly is NOT in this repo</h3>
+<p>Move Quickly lives at <code class="inline">~/Dropbox/Sync/OmniFocus/MoveQuickly/</code> (mxb) or <code class="inline">~/flotes/apps/OmniFocus/MoveQuickly/</code> (mx3 -- should be migrated to Dropbox). It's a separate system that talks to OmniFocus via JXA. The Swift binary must be compiled per machine. Hammerspoon handles the <code class="inline">Shift+Cmd+M</code> keybinding.</p>
+<h3>mx3 vs mxb path differences</h3>
+<ul>
+<li>mx3 Move Quickly: `~/flotes/apps/OmniFocus/MoveQuickly/` (should be migrated to `~/Dropbox/Sync/`)</li>
+<li>mxb Move Quickly: `~/Dropbox/Sync/OmniFocus/MoveQuickly/`</li>
+<li>Hammerspoon config on mx3 still points to flotes path</li>
+</ol>
+<h3>Raycast dev extension registration</h3>
+<p>Extensions need per-machine registration. After <code class="inline">git pull</code>, having the source isn't enough -- you need <code class="inline">npm install && npm run dev</code> (or <code class="inline">npm run build</code> + <code class="inline">ray develop</code>). On this date, 11 of 16 extensions on mxb were missing <code class="inline">dist/</code> and needed building.</p>
+<h3>Machine tagging convention</h3>
+<p>Commits include <code class="inline">(mxb)</code> or <code class="inline">(mx3)</code> in the message to track which machine produced them. This is done via <code class="inline">git config user.name</code> set to <code class="inline">loudoguno@mxb</code> / <code class="inline">loudoguno@mx3</code>.</p></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">LouTools Remote Mode -- 6 Adapters + Raycast Extension</span>
+                <span class="session-meta"><span class="meta-date">2026-03-17</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated 8h (overnight session from 03-16)</span> <span class="meta-sep">/</span> <span class="meta-session">e00b9da9</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">loutools</span><span class="tag">remote-mode</span><span class="tag">raycast</span><span class="tag">swift</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Major expansion of the LouTools Remote Mode system: added 4 new media adapters (Spotify, Apple Music, QuickTime, Web Player), built smart auto-detect (prefers playing media over merely available), added target lock persistence, and created a 13-command Raycast extension at <code class="inline">extensions/loutools/</code>. No commits to the raycast repo this day -- work was either on the LouTools repo or uncommitted.</p>
+<h2>What was accomplished</h2>
+<h3>LouTools Remote Mode (Swift, in ~/code/LouTools)</h3>
+<ul>
+<li>Added SpotifyAdapter, AppleMusicAdapter, QuickTimeAdapter, WebPlayerAdapter (generic catch-all for any Chrome tab with `<video>` or `<audio>`)</li>
+<li>Smart auto-detect: "first playing > first available" so Spotify playing beats a paused YouTube tab</li>
+<li>Target lock: `loutools remote target spotify` persists to `~/.config/loutools/target`, sticky until cleared</li>
+<li>Fixed void AppleScript return bug: void commands like `playpause` return no value, causing bridge to report failure. Fixed by appending `return "ok"` to all void commands</li>
+</ol>
+<h3>Raycast Extension (in extensions/loutools/)</h3>
+<p>Built 13 commands: 11 fire-and-forget transport controls (play/pause, seek forward/back, volume up/down, speed up/down, next/prev track, fullscreen, mute), 1 "Now Playing" view, 1 "Set Target" picker. Each command shells out to <code class="inline">/usr/local/bin/loutools</code>.</p>
+<h2>Key decisions</h2>
+<ul>
+<li>**Raycast as thin shell-out layer** -- the extension just calls the `loutools` CLI binary. No business logic in TypeScript. This means the LouTools binary must be installed on the machine for the extension to work.</li>
+<li>**`spawnSync` over `execSync`** -- `execSync` throws on non-zero exit codes. AppleScript NSLog warnings can cause non-zero exits even on success. `spawnSync` + checking stdout for explicit `Error:` prefix is more reliable.</li>
+<li>**Priority order**: YouTube > Suno > Spotify > Apple Music > QuickTime > Web Player. This reflects Lou's usage patterns.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/loutools/` -- 14 TypeScript files, 13 Raycast commands</li>
+<li>`extensions/loutools/src/loutools.ts` -- core CLI bridge</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<h3>Void return bug pattern</h3>
+<p>Both Chrome JS and AppleScript have the same issue: void expressions return nil/undefined, which bridges interpret as "no tab found" or "command failed." Always append a return value: <code class="inline">; 'ok'</code> for JS, <code class="inline">return "ok"</code> for AppleScript. This affected YouTube, Suno, Spotify, Apple Music, and QuickTime adapters.</p>
+<h3>Binary dependency</h3>
+<p>The <code class="inline">extensions/loutools/</code> Raycast extension requires <code class="inline">/usr/local/bin/loutools</code> to exist. Build from <code class="inline">~/code/LouTools</code>: <code class="inline">swift build -c release && cp .build/release/loutools /usr/local/bin/</code>. Without the binary, all commands fail silently.</p>
+<h3>`--target` flag position</h3>
+<p>ArgumentParser's <code class="inline">captureForPassthrough</code> greedily captures <code class="inline">--target value</code> if placed after the command positional. Target flag must come BEFORE the command: <code class="inline">loutools remote --target spotify status</code>.</p>
+<h3>`tell application` launches apps</h3>
+<p>AppleScript <code class="inline">tell application "Spotify"</code> will launch Spotify if it's not running. The <code class="inline">isAvailable()</code> check uses <code class="inline">isRunning(bundleID:)</code> via System Events to avoid this, but <code class="inline">isPlaying()</code> calls <code class="inline">tell</code> directly. Not a problem in practice since <code class="inline">resolve()</code> checks availability first.</p>
+<h3>State of the loutools extension</h3>
+<p>The extension source was committed to the raycast repo later (03-21 session, commit 32ea09d). On this date it was local-only on mx3.</p></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">RoamResearch Extension -- Full Build from Scratch</span>
+                <span class="session-meta"><span class="meta-date">2026-03-16</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated 7h</span> <span class="meta-sep">/</span> <span class="meta-session">6a9b38cf</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">roam-research</span><span class="tag">extension</span><span class="tag">fresh-build</span><span class="tag">api</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Built a custom Raycast extension for Roam Research from scratch (not forked from the Raycast Store extension). The Store extension requires graph picking, 2+ character minimum, and 500ms debounce. The new extension skips the graph picker, pre-populates with recently edited blocks, searches on first keystroke, and provides rich block previews with nested children and linked references.</p>
+<h2>What was accomplished</h2>
+<p>Built 4 commands and a full library layer:</p>
+<ol>
+<li>**Search** -- zero-friction search: skips graph picker (uses Primary Graph preference), shows recently edited blocks on open (Datalog `:edit/time` query, last 48h), fires search on first keystroke, rich Detail preview with 3 levels of child blocks and linked references with clickable `[[page]]` deeplinks.</li>
+</ol>
+<ol>
+<li>**Quick Capture** -- append notes to daily page or any page.</li>
+</ol>
+<ol>
+<li>**Daily Note** -- one-keystroke open of today's daily note (`no-view` mode).</li>
+</ol>
+<ol>
+<li>**Add Graph** -- graph setup with API token validation.</li>
+</ol>
+<p>Library layer:</p>
+<ul>
+<li>`roam-client.ts` -- vendored minimal Roam API client (q, pull, search, createBlock, batchActions) with peer URL caching. Strongly typed, no `any`.</li>
+<li>`roam-api.ts` -- high-level operations (searchGraph, fetchRecentEdits, fetchBackRefs, getAllPages).</li>
+<li>`graph-config.ts` -- graph config via Raycast `LocalStorage` (replaces the Store extension's broken `usePersistentState`).</li>
+<li>`markdown.ts` -- Roam-to-Raycast markdown rendering: `[[page links]]` as `raycast://` deeplinks, `((block refs))` resolution, `{{[[TODO]]}}` checkboxes, search term highlighting, nested children sorted by `:block/order`, linked references section.</li>
+</ol>
+<p>Also committed the OmniFocus UUID migration (from 03-13 session) and beads lock file gitignore updates.</p>
+<h2>Key decisions</h2>
+<ul>
+<li>**Fresh build over fork** -- the Store extension had too much friction and broken patterns (`usePersistentState`, mandatory graph picker). Starting fresh gave a clean architecture with modern deps. Used PascalCase directory name (`RoamResearch`) to distinguish from lowercase store extensions.</li>
+<li>**`LocalStorage` over `usePersistentState`** -- the Store extension's custom state hook was broken (stale reads). Raycast's built-in `LocalStorage` is simpler and reliable.</li>
+<li>**Datalog for recent edits** -- the `:edit/time` attribute lets us query blocks edited in the last 48h without a text search, enabling the "show content before typing" UX.</li>
+<li>**`throttle` mode for usePromise** -- fires search immediately on first keystroke rather than waiting for a debounce period.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/RoamResearch/src/search.tsx`, `quick-capture.tsx`, `daily-note.tsx`, `add-graph.tsx`</li>
+<li>`extensions/RoamResearch/src/lib/roam-client.ts`, `roam-api.ts`, `graph-config.ts`, `markdown.ts`, `types.ts`</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<h3>Roam API gotchas</h3>
+<ul>
+<li>Roam's search API expects `search-str` as the request body key, not `query`. Easy to miss when writing a fresh client.</li>
+<li>`usePromise` can fire with empty args even when you have guards in the callback -- add belt-and-suspenders empty checks at the API layer too.</li>
+<li>`:block/_children` is the parent chain (reverse), `:block/children` is actual children (forward). The naming is confusing. The Store extension only used `_children` which is why it never showed page content.</li>
+<li>`:block/_refs` needs to be pulled with content -- bare keyword pulls give you just UIDs. Need `{:block/_refs [:block/uid :block/string ...]}` to get renderable data.</li>
+<li>Encrypted Roam graphs are not supported (Roam backend limitation).</li>
+<li>API rate limits are undocumented -- the client uses exponential backoff.</li>
+<li>Graph owner must generate API tokens; collaborators cannot.</li>
+</ol>
+<h3>PascalCase convention</h3>
+<p>The directory <code class="inline">extensions/RoamResearch/</code> uses PascalCase to signal "custom spin-off" vs lowercase store extensions. This is a repo convention, not a Raycast requirement.</p>
+<h3>Icon generation</h3>
+<p>No image generation API keys were available on mx3. Used ImageMagick to generate the icon programmatically. Works for geometric/icon designs but should be replaced with a polished icon when possible.</p>
+<h3>ESLint upstream issue</h3>
+<p>ESLint 9 + <code class="inline">@raycast/eslint-config</code> has an upstream <code class="inline">@rushstack/eslint-patch</code> compatibility issue. Lint errors are dev-only and don't affect build.</p>
+<h3>Per-machine registration required</h3>
+<p>After <code class="inline">git pull</code> on a new machine, must run <code class="inline">npm install && npm run dev</code> (or <code class="inline">ray develop</code>) to register the extension with Raycast. Just having the source isn't enough.</p></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">OmniFocus UUID Migration + LouTools Remote Mode Investigation</span>
+                <span class="session-meta"><span class="meta-date">2026-03-13</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated 3h</span> <span class="meta-sep">/</span> <span class="meta-session">e5703efc</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">omnifocus</span><span class="tag">skill-development</span><span class="tag">jxa</span><span class="tag">investigation</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Overhauled the <code class="inline">/check-omnifocus</code> skill to use UUID-based project association instead of fragile name matching, and conducted a massive investigation session for the LouTools Remote Mode module (separate repo but informs future raycast extension work).</p>
+<h2>What was accomplished</h2>
+<h3>/check-omnifocus UUID Migration</h3>
+<p>Replaced <code class="inline">omnifocus_project: "Name"</code> with <code class="inline">omnifocus_id: UUID  # Name</code> in CLAUDE.md files across all linked projects. The need was proven in real-time: the Raycast project had been renamed from "Create OmniFocus Raycast Extension:" to "OmniFocus Raycast extension" and the old name-based lookup silently failed.</p>
+<p>Added auto-create flow: when <code class="inline">/check-omnifocus</code> runs in a directory with no linked OmniFocus project, it offers to create one. Derives name from filesystem path, picks folder via path-prefix heuristic, creates project with <code class="inline">file:///</code> and GitHub links in the note, writes UUID back to CLAUDE.md.</p>
+<p>Established filesystem-path naming convention for OmniFocus projects (e.g., <code class="inline">~/code/raycast</code> instead of "Raycast Extensions").</p>
+<h3>LouTools Remote Mode Investigation (raycast-adjacent)</h3>
+<p>Deployed 10 parallel agents to research a system for controlling media apps (YouTube, Spotify, etc.) without switching windows. Key finding: Chrome's AppleScript <code class="inline">execute javascript</code> does NOT steal focus, eliminating the core limitation of the old Keyboard Maestro-based system.</p>
+<p>Set up <code class="inline">~/code/LouTools</code> repo with architecture docs. This later led to the <code class="inline">extensions/loutools</code> Raycast extension (13 commands for remote media control).</p>
+<h2>Key decisions</h2>
+<ul>
+<li>**UUID over project name** for OmniFocus linking -- names change, UUIDs are stable (mostly -- see gotcha below).</li>
+<li>**Filesystem-path naming** for OmniFocus projects -- `~/code/raycast` is more findable than "Raycast Extensions".</li>
+<li>**Two scripting layers** for OmniFocus: JXA for reading (simpler), Omni Automation bridge for writes and attachments (JXA throws "Access not allowed" on writes).</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>Updated `~/code/raycast/CLAUDE.md` -- migrated from `omnifocus_project:` to `omnifocus_id:` at line 1</li>
+<li>Updated `extensions/claude-sessions/CLAUDE.md` -- same migration</li>
+<li>`~/code/LouTools/` -- new repo (separate from this one)</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<h3>OmniFocus UUID stability warning</h3>
+<p>OmniFocus UUIDs can shift during sync between machines. Observed <code class="inline">dYSEErhzWgu</code> changing to <code class="inline">nZE86i0HgFd</code> for the Journal project. This is a known fragility -- still far more reliable than name matching, but not 100% stable. If <code class="inline">/check-omnifocus</code> fails to find a project by UUID, it should fall back to searching by name before offering to create a new one.</p>
+<h3>OmniFocus API layers</h3>
+<ul>
+<li>**JXA** (`osascript -l JavaScript`): Good for reading. Returns JSON easily. Cannot write reliably.</li>
+<li>**Omni Automation bridge** (`app.evaluateJavascript()`): Required for `markComplete()`, `markDropped()` (which doesn't exist -- use `markComplete()`), attachments, and creating items. Uses `id.primaryKey` for lookups.</li>
+<li>**`flattenedTasks.byId()` doesn't exist** in Omni Automation -- use `.find()`.</li>
+<li>**`moveSections()`** is correct for moving projects between folders (not `moveTasks()` or `moveProjects()`).</li>
+<li>**No IIFEs in JXA `-e` mode** -- the last expression must be bare for output.</li>
+</ol>
+<h3>LouTools relevance to this repo</h3>
+<p>The <code class="inline">extensions/loutools/</code> directory contains a Raycast extension that wraps the <code class="inline">/usr/local/bin/loutools</code> CLI binary. The binary itself lives in <code class="inline">~/code/LouTools</code> (separate Swift monorepo). The Raycast extension is just a thin shell-out layer.</p></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Beads Issue Tracking Setup + First Health Check</span>
+                <span class="session-meta"><span class="meta-date">2026-03-12</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated 2h (spanning 03-11 to 03-12)</span> <span class="meta-sep">/</span> <span class="meta-session">n/a</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">beads</span><span class="tag">health-check</span><span class="tag">code-health</span><span class="tag">setup</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Initialized the beads issue tracking system on the Raycast repo and ran the first comprehensive <code class="inline">/health-check</code> across all 11 extensions (~75 source files). Filed 22 findings as structured beads under a parent epic and documented the system in CLAUDE.md.</p>
+<h2>What was accomplished</h2>
+<p>Installed beads (<code class="inline">bd</code> CLI) and ran <code class="inline">bd init</code> to create the <code class="inline">.beads/</code> directory with a Dolt database. Then ran <code class="inline">/health-check</code> which scanned the entire repo and filed 22 findings under epic <code class="inline">raycast-8eu</code>:</p>
+<p><strong>Top P1 findings:</strong></p>
+<ul>
+<li>Zero test coverage across all 11 extensions</li>
+<li>`list-sessions.tsx` (657 lines) is monolithic -- mixes data/logic/UI</li>
+<li>`daily-summary.tsx` (646 lines) same problem</li>
+</ol>
+<p><strong>P2 findings:</strong></p>
+<ul>
+<li>Duplicated date parsing (~100 lines duplicated within claude-usage)</li>
+<li>Two independent git utility implementations</li>
+<li>`expandPath()` duplicated in two extensions</li>
+<li>9 silent catch blocks in omnifocus JXA wrappers swallow errors</li>
+</ol>
+<p><strong>P3 findings:</strong></p>
+<ul>
+<li>Config inconsistencies (claude-built has non-standard tsconfig with strict: false)</li>
+</ol>
+<p>One bead (<code class="inline">raycast-8eu.9</code>, orphaned <code class="inline">balloons/balloons/</code> directory) was cleaned up during the session.</p>
+<p>Updated CLAUDE.md with full beads documentation: setup, commands, health check workflow, and added beads to the mxb machine setup checklist.</p>
+<h2>Key decisions</h2>
+<ul>
+<li>**Beads over GitHub Issues** -- beads stores issues locally in a Dolt database that syncs via git. No cloud dependency, works offline, designed for AI agents.</li>
+<li>**Health check as an epic with children** -- each finding is a child bead of the run epic, allowing `bd children raycast-8eu` to see the full tree.</li>
+<li>**KV metadata for run tracking** -- `bd kv get health-check.last-run` records when the last health check ran, enabling deduplication on subsequent runs.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`.beads/` -- Dolt database directory (config tracked by git, runtime files gitignored)</li>
+<li>`.beads/config.yaml` -- Default beads config (issue prefix: `raycast-`)</li>
+<li>`AGENTS.md` -- Auto-generated by `bd init` with agent workflow instructions</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<h3>Beads architecture</h3>
+<ul>
+<li>Issues live in a Dolt database inside `.beads/`. Dolt is a SQL database with git-like versioning.</li>
+<li>The `.beads/` directory has its own `.gitignore` that excludes runtime files but tracks config and metadata.</li>
+<li>On a new machine: `brew install beads`, then `bd info` auto-discovers the database after `git pull`.</li>
+<li>`bd sync` is referenced in AGENTS.md but doesn't exist as a standalone command -- sync happens through Dolt's own mechanism.</li>
+</ol>
+<h3>Beads workflow</h3>
+<pre><code class="lang-">
+bd ready          # See actionable issues
+bd children &lt;id&gt;  # See issue tree under an epic
+bd show &lt;id&gt;      # Full issue details
+bd update &lt;id&gt; --claim  # Start working on it
+bd close &lt;id&gt; --reason "Fixed in commit abc123"
+</code></pre>
+<h3>Health check deduplication</h3>
+<p>The <code class="inline">/health-check</code> skill creates an epic per run (labeled <code class="inline">health,health-run</code>). Individual findings become children. Before creating new beads, it checks existing open beads for duplicates via title similarity.</p>
+<h3>Known issue</h3>
+<p>One stale remote branch exists: <code class="inline">claude/raycast-extension-customization-a1zQV</code> (from Jan 9, 2026). Left for user to decide on cleanup.</p>
+<h3>State of repo</h3>
+<p>22 findings filed, 21 still open. The biggest architectural debts are the monolithic files (<code class="inline">list-sessions.tsx</code>, <code class="inline">daily-summary.tsx</code>) and zero test coverage.</p></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">OmniFocus Full Build + Claude Sessions Fixes + Journal Setup</span>
+                <span class="session-meta"><span class="meta-date">2026-03-10</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated full day</span> <span class="meta-sep">/</span> <span class="meta-session">multiple</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">omnifocus</span><span class="tag">jxa</span><span class="tag">claude-sessions</span><span class="tag">journal</span><span class="tag">big-day</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>A massive day on mx3 that produced the OmniFocus extension (3 commands, 5 API modules), fixed critical session matching in the Claude Sessions extension, built the <code class="inline">/check-omnifocus</code> skill for bidirectional OmniFocus-Claude Code integration, and set up the CloudClaude journal vault with Obsidian and an HTML changelog dashboard.</p>
+<h2>What was accomplished</h2>
+<h3>OmniFocus Extension (primary work)</h3>
+<p>Took the OmniFocus extension from a basic "Quick Add Anywhere" scaffolding to a full-featured control center:</p>
+<ol>
+<li>**Quick Add Anywhere** -- Browse all projects, tasks, folders, and tags with fuzzy search. Select a destination and create a task/subtask with full metadata. Added `Cmd+P` type filter dropdown, folder/tag support, and new actions (open in OmniFocus, copy URL, copy markdown link).</li>
+</ol>
+<ol>
+<li>**Show Today** -- Daily command center with 4 auto-sorted sections: Overdue, Due Today, Flagged, Due Soon. Full action panel with complete (`Cmd+D`), reschedule presets (`Cmd+E`), flag toggle, defer presets, and "Complete & Await Reply" (`Cmd+Shift+W`).</li>
+</ol>
+<ol>
+<li>**Quick Add to Inbox** -- Zero-UI `no-view` command for instant inbox capture via global hotkey.</li>
+</ol>
+<p>Built 5 new JXA API modules: <code class="inline">list-today-tasks.ts</code>, <code class="inline">complete-task.ts</code>, <code class="inline">complete-and-await.ts</code>, <code class="inline">update-task-date.ts</code>, <code class="inline">toggle-flag.ts</code>. Fixed <code class="inline">list-destinations.ts</code> (folders were being silently skipped because <code class="inline">folder.status()</code> doesn't exist in JXA).</p>
+<h3>OmniFocus Integration Skill</h3>
+<p>Created the <code class="inline">/check-omnifocus</code> Claude Code slash command -- a bridge that lets Claude query OmniFocus as a project issue tracker. Uses JXA for reading task data and Omni Automation bridge (<code class="inline">app.evaluateJavascript()</code>) for attachments and writes. Can extract screenshots from OmniFocus task attachments via <code class="inline">att.contents.toBase64()</code>.</p>
+<p>Added <code class="inline">omnifocus_project:</code> mapping to CLAUDE.md so any project can link to its OmniFocus tracking project.</p>
+<h3>Claude Sessions Extension Fixes</h3>
+<p>Fixed critical session matching that left 4 of 7 sessions without data:</p>
+<ul>
+<li>**Old matching** (broken): Compared process start time to JSONL birth time within 10 seconds. Claude Code takes 10-100+ seconds to create the JSONL, so most sessions never matched.</li>
+<li>**New matching** (CWD-based): Batch-fetch CWDs via `lsof`, match to JSONL `cwd` field, use birth time as tiebreaker for multiple JSONLs sharing a CWD.</li>
+</ol>
+<p>Added session name extraction from <code class="inline">/rename</code> commands in JSONL transcripts. Display priority: session name > cleaned Terminal tab title > first user prompt > directory basename.</p>
+<p>Filtered out non-interactive processes (subagents, <code class="inline">-p</code> one-shots with TTY <code class="inline">??</code>).</p>
+<h3>Post-merge Hook</h3>
+<p>Created <code class="inline">hooks/post-merge</code> (version-controlled) for auto-rebuilding changed extensions after <code class="inline">git pull</code>. Diffs ORIG_HEAD vs HEAD to find which <code class="inline">extensions/</code> directories changed, runs <code class="inline">npm run build</code> only for those.</p>
+<h3>Journal Vault Setup</h3>
+<p>Set up the CloudClaude journal system with Obsidian vault integration and an auto-generated HTML changelog dashboard. The <code class="inline">/write-in-your-journal</code> command writes session summaries, updates daily notes, and rebuilds the dashboard. Not directly raycast code, but established the session documentation workflow used going forward.</p>
+<h2>Key decisions</h2>
+<ul>
+<li>**JXA over AppleScript** for OmniFocus -- JXA gives JavaScript syntax and easier JSON handling. But it has limitations: can't access attachments or call `markComplete()`, so those go through the Omni Automation bridge.</li>
+<li>**CWD-based session matching** over time-based -- far more reliable since Claude Code's startup time is unpredictable.</li>
+<li>**`usePromise` over `useCachedPromise`** for OmniFocus data fetching -- avoids stale cache showing completed tasks. (This is the opposite choice from what Search Status Menu later made, where stale cache is acceptable.)</li>
+<li>**Post-merge hook as a symlink** -- stored in `hooks/post-merge` (tracked by git), symlinked from `.git/hooks/post-merge`. Each machine needs the symlink created once.</li>
+<li>**`humanReadableOutput: true`** in `runAppleScript` -- the `-ss` flag causes double-quoting issues with JXA output.</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/omnifocus/src/show-today.tsx` -- daily command center</li>
+<li>`extensions/omnifocus/src/quick-add-inbox.tsx` -- zero-UI capture</li>
+<li>`extensions/omnifocus/src/lib/api/list-today-tasks.ts`, `complete-task.ts`, `complete-and-await.ts`, `update-task-date.ts`, `toggle-flag.ts` -- JXA API modules</li>
+<li>`extensions/claude-sessions/src/list-sessions.tsx` -- major rewrite for CWD matching + session names</li>
+<li>`hooks/post-merge` -- git post-merge auto-rebuild hook</li>
+<li>`~/.claude/commands/check-omnifocus.md` -- OmniFocus integration skill</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<h3>OmniFocus JXA gotchas (critical)</h3>
+<ul>
+<li>`folder.status()` does not exist in JXA -- unlike projects, folders have no status. Calling it throws silently, causing folders to be skipped.</li>
+<li>`String.repeat(-1)` crashes Node -- guard depth calculations with `Math.max(0, ...)`.</li>
+<li>`containingProject()` throws if a task is in the inbox -- always wrap in try/catch.</li>
+<li>`estimatedMinutes` may return null or 0 -- only display when > 0.</li>
+<li>OmniFocus status enum must be compared via `String()` coercion, not direct equality.</li>
+<li>`whose()` clauses can throw type conversion errors -- prefer JS-side filtering.</li>
+<li>`effectivelyDropped()` may not exist in all OF versions -- wrap in try/catch.</li>
+<li>JXA `-e` mode: don't wrap in IIFE -- last bare expression produces output.</li>
+<li>`flattenedTasks.byId()` doesn't exist in Omni Automation -- use `.find()` with `id.primaryKey`.</li>
+</ol>
+<h3>Claude Sessions matching</h3>
+<ul>
+<li>`lsof` exits code 1 if any PID in the list doesn't exist (session ended between `ps` and `lsof`). Fixed with `; true` suffix.</li>
+<li>Terminal.app's `custom title` returns the Claude status prefix (braille chars like `\u2810`). Stripped via regex.</li>
+<li>`settings.local.json` is gitignored -- each machine needs its own `Bash(osascript *)` permission.</li>
+</ol>
+<h3>Post-merge hook setup</h3>
+<p>On any new machine or after clone: <code class="inline">ln -sf ../../hooks/post-merge .git/hooks/post-merge</code></p>
+<h3>"Complete & Await Reply" pattern</h3>
+<p>A beloved OmniFocus power-user workflow, now one keystroke: marks original task complete, creates "Waiting: {name}" duplicate in same project with "Waiting For" tag (auto-created if missing), defers to tomorrow 9 AM, due in 1 week.</p>
+<h3>State of repo after this day</h3>
+<p>The OmniFocus extension went from scaffolding to fully functional with 3 commands. The Claude Sessions extension became usable for the first time (previously 4/7 sessions showed no data). The post-merge hook was created but needs the symlink on each machine.</p></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Major Extensions Buildout</span>
+                <span class="session-meta"><span class="meta-date">2026-02-22</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb, mx3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated ~6h</span> <span class="meta-sep">/</span> <span class="meta-session">reconstr</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">consolidation</span><span class="tag">claude-sessions</span><span class="tag">typing-practice</span><span class="tag">machine-sync</span><span class="tag">git-repos</span><span class="tag">session-launcher</span><span class="tag">new-extension</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><p>> [!info] Reconstructed from git history — no live session notes exist for this date.</p>
+<h2>Summary</h2>
+<p>The single most productive day in the repo's history. Started on mxb with a major consolidation cleanup, then moved to mx3 for an evening sprint that produced four new extensions in under 90 minutes. Five commits, ~3,400 lines of new code, six new extension concepts.</p>
+<h2>What was accomplished</h2>
+<h3>Repo consolidation (mxb, 17:49)</h3>
+<p>A significant cleanup commit that shaped the repo into its modern form:</p>
+<ul>
+<li>**Removed**: `extensions/agents/` (SalesSprint scaffolding), nested `balloons/balloons/` duplicate, stale PLAN.md files, ICON_NEEDED.txt, `.claude/sessions/` experiment tracking</li>
+<li>**Added**: comprehensive README with full inventory, architecture decisions, multi-machine sync documentation</li>
+<li>**Added**: `raycast-system.html` — interactive dashboard (1,062 lines) for visualizing the extension ecosystem</li>
+<li>**Added**: `scripts/pai/` — 8 PAI-related Raycast scripts (anki-review, ask-pai, live-narrator, dashboard, quick-ask, settings, voice-toggle)</li>
+<li>**Updated**: `.gitignore` with package-lock.json, build/, raycast-env.d.ts, editor state</li>
+<li>Architecture decision documented: monorepo over submodules. The separate `loudoguno/extensions` repo to be archived.</li>
+</ol>
+<h3>Claude Sessions extension (mx3, 22:54)</h3>
+<p>Live dashboard of all running Claude Code terminal sessions. The first version of what would become one of the most-used extensions:</p>
+<ul>
+<li>Discovers sessions via `ps` process list + JSONL session files in `~/.claude/projects/`</li>
+<li>Matches processes to sessions by CWD (via `lsof`) and time-based fallback</li>
+<li>Reads Terminal.app tab titles via AppleScript</li>
+<li>Shows status indicators (Working/Waiting/Idle), detail panel with path, branch, CPU, memory</li>
+<li>495-line single-file implementation</li>
+</ol>
+<h3>Typing Practice extension (mx3, 22:59)</h3>
+<p>Custom typing speed test with sound effects and confetti:</p>
+<ul>
+<li>List+Detail panel with code block text display</li>
+<li>Search bar as typing input, live WPM/accuracy stats</li>
+<li>Per-keystroke audio feedback via macOS `afplay`</li>
+<li>Perfect score triggers Raycast confetti with native sound</li>
+<li>Common and code word sets with 10/25/50/100 word counts</li>
+</ol>
+<h3>Machine Sync Dashboard extension (mx3, 23:02)</h3>
+<p>Two-machine sync dashboard comparing git repo status between mx3 and mxb via SSH over Tailscale:</p>
+<ul>
+<li>Shows keybindings and raycast repos with branch, dirty state, ahead/behind, recent commits</li>
+<li>Detail panel for each repo</li>
+<li>Quick Sync action to pull on both machines simultaneously</li>
+</ol>
+<h3>Session Launcher + Git Multi-Repo Status extensions (mx3, 23:16)</h3>
+<p>Two extensions in one commit:</p>
+<ul>
+<li>**Session Launcher** — browse HANDOFF.md files across projects and `~/logs/` session entries to pick up where you left off</li>
+<li>**Git Multi-Repo Status** — menu bar command (10-minute refresh) showing dirty/unpushed repo count, plus full list view with status, recent commits, push/pull actions for all repos under `~/code/`</li>
+</ol>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/claude-sessions/` — session dashboard (495-line single file)</li>
+<li>`extensions/typing-practice/` — typing test with sound effects (304-line main, word lists, utils)</li>
+<li>`extensions/machine-sync/` — two-machine sync dashboard (443-line main)</li>
+<li>`extensions/session-launcher/` — handoff browser (session-launcher.tsx 300 lines, recent-sessions.tsx 225 lines)</li>
+<li>`extensions/git-repos/` — multi-repo status (git-repos.tsx 264 lines, menu-bar.tsx 58 lines, utils/git.ts 166 lines)</li>
+<li>`raycast-system.html` — interactive system dashboard (1,062 lines)</li>
+<li>`scripts/pai/` — 8 PAI integration scripts</li>
+<li>`README.md` — comprehensive rewrite with full inventory</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>This session marks the transition from "collection of extensions" to "extension ecosystem." The README rewrite and dashboard reflect a shift in thinking about the repo as a system.</li>
+<li>Claude Sessions would receive significant iteration in later months (remote control URL support, JSONL matching improvements, badge indicators).</li>
+<li>The machine-sync extension depends on Tailscale SSH between mx3 and mxb — it only works when both machines are on the Tailnet.</li>
+<li>Session Launcher depends on HANDOFF.md files existing in project directories — a convention from the PAI system.</li>
+<li>All four evening extensions were co-authored with Claude Opus 4.6 and committed within 22 minutes (22:54 to 23:16), suggesting they were built in a focused sprint with Claude doing most of the implementation.</li>
+<li>The morning consolidation commit on mxb and evening extension sprint on mx3 confirms active use of both machines on the same day.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Script Commands Batch</span>
+                <span class="session-meta"><span class="meta-date">2026-02-18</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated</span> <span class="meta-sep">/</span> <span class="meta-session">reconstr</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">scripts</span><span class="tag">claude-code</span><span class="tag">stickies</span><span class="tag">ikdb</span><span class="tag">finder-actions</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><p>> [!info] Reconstructed from git history — no live session notes exist for this date.</p>
+<h2>Summary</h2>
+<p>A prolific two-day session (Feb 18-19) that added a wave of Raycast script commands for various tools and workflows. Also includes an interesting pattern where Finder Actions was first built as a full extension, then immediately re-implemented as a simpler script command. All work co-authored with Claude Opus 4.6 (the model upgrade from 4.5).</p>
+<h2>What was accomplished</h2>
+<h3>Claude Code script commands (Feb 18)</h3>
+<p>Five scripts for launching Claude Code from Raycast:</p>
+<ul>
+<li>`claude-code-here.sh` — open Claude Code in current directory</li>
+<li>`claude-code-open.sh` — open Claude Code with project picker</li>
+<li>`claude-code-recent.sh` — open recent Claude Code projects</li>
+<li>`claude-review-file.sh` — review current file with Claude</li>
+<li>`claude-review-history.sh` — review git history with Claude</li>
+</ol>
+<h3>Stickies script commands (Feb 18)</h3>
+<p>Three scripts for macOS Stickies:</p>
+<ul>
+<li>`stickies-grid.sh` — grid view of stickies</li>
+<li>`stickies-info.sh` — stickies info view</li>
+<li>`stickies-timeline.sh` — timeline view</li>
+</ol>
+<h3>IKDB script commands (Feb 18)</h3>
+<p>Three scripts for the interactive keybinding database:</p>
+<ul>
+<li>`ikdb-cheatsheet.sh` — view keybinding cheatsheet</li>
+<li>`ikdb-query.sh` — query keybindings</li>
+<li>`ikdb-quick-add.sh` — quick add a keybinding</li>
+</ol>
+<h3>Healthcheck and utilities (Feb 18)</h3>
+<ul>
+<li>`healthcheck.sh` — system health check script</li>
+<li>`km:-go-to-last-used-macro.applescript` — Keyboard Maestro AppleScript</li>
+<li>`OpenLinkUnderCursor-Tot.scpt` — Tot app AppleScript for opening links</li>
+</ol>
+<h3>Finder Actions: extension then script (Feb 18-19)</h3>
+<p>Created <code class="inline">extensions/finder-actions/</code> as a full Raycast extension with a command palette for Finder window actions (open in Terminal, Ghostty, iTerm, Warp). The next day, re-implemented it as a simple <code class="inline">finder-actions.sh</code> script command with a dropdown. The lesson: sometimes a 52-line script command is better than a 91-line TypeScript extension when you just need a dropdown.</p>
+<h3>Housekeeping</h3>
+<p>Updated <code class="inline">.gitignore</code> to exclude <code class="inline">node_modules/</code>, <code class="inline">dist/</code>, and <code class="inline">tsbuildinfo</code>. Removed the stale ideas2 file.</p>
+<h2>Files created</h2>
+<ul>
+<li>`scripts/claude-code-here.sh`, `claude-code-open.sh`, `claude-code-recent.sh`, `claude-review-file.sh`, `claude-review-history.sh`</li>
+<li>`scripts/stickies-grid.sh`, `stickies-info.sh`, `stickies-timeline.sh`</li>
+<li>`scripts/ikdb-cheatsheet.sh`, `ikdb-query.sh`, `ikdb-quick-add.sh`</li>
+<li>`scripts/healthcheck.sh`</li>
+<li>`scripts/g-scripts/` — Keyboard Maestro and Tot AppleScripts</li>
+<li>`extensions/finder-actions/` — full extension (later replaced by script)</li>
+<li>`scripts/finder-actions.sh` — simple script replacement</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>This was the first session using Claude Opus 4.6 as co-author (upgraded from 4.5).</li>
+<li>The Finder Actions extension-to-script pivot is a useful data point: script commands sync via git and need no build/dev server, making them better for simple UI (dropdowns, text input) while full extensions are needed for rich UI (lists, detail panels, forms).</li>
+<li>IKDB (Interactive Keybinding Database) was a separate project on the machine.</li>
+<li>The 6 commits on Feb 18 all have timestamps within seconds of each other (14:56:16 to 14:56:42), suggesting they were staged separately but committed in rapid succession — possibly a batch commit of work done earlier.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Claude Built Palette Extension</span>
+                <span class="session-meta"><span class="meta-date">2026-01-17</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated</span> <span class="meta-sep">/</span> <span class="meta-session">reconstr</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">new-extension</span><span class="tag">claude-built</span><span class="tag">palette</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><p>> [!info] Reconstructed from git history — no live session notes exist for this date.</p>
+<h2>Summary</h2>
+<p>Created the Claude Built Palette extension — a unified searchable view of all Claude-built tools, skills, scripts, and aliases across the system. Also merged in changes from mx3 (the Chrome profile switcher and other accumulated work from the remote machine).</p>
+<h2>What was accomplished</h2>
+<h3>Claude Built Palette extension</h3>
+<p>Built a Raycast extension that auto-discovers and surfaces all Claude-created artifacts:</p>
+<ul>
+<li>Scans `~/.claude/skills`, `~/aia/bin`, Raycast scripts directory, and shell aliases</li>
+<li>Unified list view with filter-by-type dropdown</li>
+<li>Favorites system with Cmd+F to pin items</li>
+<li>Relative timestamps ("2h ago")</li>
+<li>Rich action menu: view source, open in terminal/Claude Code, git history, copy as markdown</li>
+</ol>
+<h3>Registry and generator</h3>
+<ul>
+<li>`src/registry.ts` — runtime artifact discovery logic (175 lines)</li>
+<li>`src/execute.ts` — execution handlers for different artifact types</li>
+<li>`scripts/generate-registry.sh` — 360-line shell script for static registry generation</li>
+</ol>
+<h3>Multi-machine sync</h3>
+<p>The merge commits show mxb pulling in work that had accumulated on mx3 (Chrome profile switcher from Jan 15, plus earlier scripts). This was a manual git merge to sync the two machines.</p>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/claude-built/src/index.tsx` — main palette UI (305 lines)</li>
+<li>`extensions/claude-built/src/registry.ts` — artifact discovery (175 lines)</li>
+<li>`extensions/claude-built/src/execute.ts` — execution handlers (129 lines)</li>
+<li>`extensions/claude-built/src/types.ts` — TypeScript interfaces</li>
+<li>`extensions/claude-built/scripts/generate-registry.sh` — static generator (360 lines)</li>
+<li>`extensions/claude-built/package.json`, `tsconfig.json`, `README.md`</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>This extension depends on the PAI ecosystem paths (`~/.claude/skills`, `~/aia/bin`) which are specific to Lou's setup.</li>
+<li>The stash commits (3ca96bc, 75715c8) indicate there were uncommitted changes on mxb when pulling from remote — a common pattern when working across multiple machines.</li>
+<li>Co-authored with Claude Opus 4.5.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Chrome Profile Switcher</span>
+                <span class="session-meta"><span class="meta-date">2026-01-15</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated</span> <span class="meta-sep">/</span> <span class="meta-session">reconstr</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">scripts</span><span class="tag">chrome</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><p>> [!info] Reconstructed from git history — no live session notes exist for this date.</p>
+<h2>Summary</h2>
+<p>Added a Raycast script command to switch to a specific Chrome profile ("My Old Kentucky Host") and navigate to Amazon order history. A small, focused utility script.</p>
+<h2>What was accomplished</h2>
+<h3>chrome-profile-my-old-kentucky-host.sh</h3>
+<p>A 34-line script that opens Chrome with a specific profile via menu navigation and navigates to Amazon order history. Purpose-built for a specific workflow — likely managing orders for a property or business called "My Old Kentucky Host."</p>
+<h2>Files created</h2>
+<ul>
+<li>`scripts/chrome-profile-my-old-kentucky-host.sh` — Chrome profile switcher (34 lines)</li>
+<li>`scripts/README.md` — updated index</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>Co-authored with Claude Opus 4.5.</li>
+<li>This script uses Chrome's menu-based profile switching rather than command-line flags, which can be fragile if Chrome's menu structure changes.</li>
+<li>The "My Old Kentucky Host" name suggests an Airbnb or rental property management workflow.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Fork Framework</span>
+                <span class="session-meta"><span class="meta-date">2026-01-09</span> <span class="meta-sep">/</span> <span class="meta-machine">unknown</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated ~2h</span> <span class="meta-sep">/</span> <span class="meta-session">reconstr</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">forking</span><span class="tag">framework</span><span class="tag">planning</span><span class="tag">ai-assisted</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><p>> [!info] Reconstructed from git history — no live session notes exist for this date.</p>
+<h2>Summary</h2>
+<p>An AI-driven planning session (all 4 commits authored by "Claude") that created a comprehensive framework for forking, customizing, and maintaining Raycast Store extensions. This was an ambitious design for a self-developing extension ecosystem — fork store extensions, add custom features, and keep them synced with upstream.</p>
+<h2>What was accomplished</h2>
+<h3>Forking protocol and tooling</h3>
+<p>Created <code class="inline">extensions/forked/</code> with full documentation and helper scripts:</p>
+<ul>
+<li>`FORKING.md` — complete protocol for fork, customize, sync workflow (387 lines)</li>
+<li>`fork-extension.sh` — script to fork a store extension into the repo</li>
+<li>`sync-check.sh` — check if upstream has updates</li>
+<li>`apply-upstream.sh` — merge upstream changes into forked extensions</li>
+<li>`.upstream` and `MODS.md` templates for tracking modifications</li>
+</ol>
+<h3>Extension-specific fork plans</h3>
+<p>Detailed improvement plans for three target extensions:</p>
+<ul>
+<li>**Linear** — quick assign, keyboard shortcuts, UI enhancements</li>
+<li>**Obsidian** — quick capture, multi-vault support, content search</li>
+<li>**Roam Research** — semantic RAG, graph-aware AI, alias resolution (this plan would later influence the fresh-build RoamResearch extension)</li>
+</ol>
+<h3>Iterative development workflow</h3>
+<p>Designed a self-developing loop: submit feedback from within the extension itself, Claude Code implements changes, PR created, update installed. Included a shared <code class="inline">submit-feedback.tsx</code> component.</p>
+<h3>Extension suggestions</h3>
+<p>Comprehensive list of 27 extensions across 6 priority tiers, with detailed improvement ideas for each. Included a batch fork script (<code class="inline">fork-all-tier1.sh</code>) to set up all Tier 1 extensions at once.</p>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/forked/FORKING.md` — fork protocol (387 lines)</li>
+<li>`extensions/forked/CUSTOMIZATIONS.md` — planned modifications</li>
+<li>`extensions/forked/ITERATIVE-DEV.md` — self-developing workflow</li>
+<li>`extensions/forked/CLAUDE-PROMPTS.md` — Claude Code prompts for kickoff</li>
+<li>`extensions/forked/KICKOFF.md` — project kickoff template</li>
+<li>`extensions/forked/EXTENSION-SUGGESTIONS.md` — 27 extensions across 6 tiers (465 lines)</li>
+<li>`extensions/forked/scripts/` — fork, sync-check, apply-upstream helper scripts</li>
+<li>`extensions/forked/_template/` — .upstream and MODS.md templates</li>
+<li>`extensions/forked/{linear,obsidian,roam}-custom/` — per-extension plans</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>All commits have author "Claude" with UTC timestamps — this was likely a headless Claude Code session without local git user config.</li>
+<li>The fork framework was mostly a planning artifact. In practice, the Roam Research extension was later built fresh (as `extensions/RoamResearch/`) rather than forked, following the "fresh start" approach documented in the repo's CLAUDE.md.</li>
+<li>The `extensions/forked/` directory represents aspirational architecture that was partially superseded by simpler approaches.</li>
+<li>The iterative-dev / submit-feedback concept was ahead of its time but not actively used.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Keybinding Reload Script</span>
+                <span class="session-meta"><span class="meta-date">2025-12-27</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated</span> <span class="meta-sep">/</span> <span class="meta-session">reconstr</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">scripts</span><span class="tag">keybindings</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><p>> [!info] Reconstructed from git history — no live session notes exist for this date.</p>
+<h2>Summary</h2>
+<p>Added a <code class="inline">restart-all.sh</code> script for reloading the entire keybinding system. A small, focused addition two days after the Christmas keybinding iteration — this time from mx3 rather than mxb3.</p>
+<h2>What was accomplished</h2>
+<h3>restart-all.sh</h3>
+<p>Created a 49-line script that reloads all keybinding-related processes. This provides a clean way to restart the keybinding system after config changes without rebooting or manually killing processes.</p>
+<h2>Files created</h2>
+<ul>
+<li>`scripts/restart-all.sh` — keybinding system reload script (49 lines)</li>
+<li>`scripts/README.md` — updated index</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>First commit from the `mx3` machine in this repo's history. This confirms at least two active development machines by late December 2025.</li>
+<li>The keybinding system was a separate project (`~/keybindings`) that these Raycast scripts interfaced with.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Keybinding System Iteration (Christmas Morning)</span>
+                <span class="session-meta"><span class="meta-date">2025-12-25</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated ~1h</span> <span class="meta-sep">/</span> <span class="meta-session">reconstr</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">scripts</span><span class="tag">keybindings</span><span class="tag">ghostty</span><span class="tag">health-check</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><p>> [!info] Reconstructed from git history — no live session notes exist for this date.</p>
+<h2>Summary</h2>
+<p>A focused hour on Christmas morning (09:52 to 10:49) iterating on <code class="inline">keybindings-claude.sh</code> through 7 rapid commits. The core migration was switching from AppleScript keystroke automation to Ghostty's CLI for launching Claude Code sessions, plus integrating the health check system.</p>
+<h2>What was accomplished</h2>
+<h3>Ghostty CLI migration</h3>
+<p>The keybindings-claude script originally used AppleScript to send keystrokes. This session replaced that approach with Ghostty's native CLI, which is more reliable and doesn't depend on window focus timing.</p>
+<h3>Health check integration</h3>
+<p>Wired up the healthcheck script so it runs as part of the keybinding flow. Hit a filename issue (hyphen vs no hyphen in <code class="inline">healthcheck.sh</code>) that took a commit to fix.</p>
+<h3>Terminal routing decision</h3>
+<p>Final architecture: health checks run in Terminal.app while Claude Code sessions launch in Ghostty. This separation keeps the health check output visible in the standard terminal while Claude gets the GPU-accelerated Ghostty environment.</p>
+<h3>Housekeeping</h3>
+<p>Removed <code class="inline">.DS_Store</code> files from tracking and added them to gitignore.</p>
+<h2>Files modified</h2>
+<ul>
+<li>`scripts/keybindings-claude.sh` — 5 iterations across the session</li>
+<li>`scripts/README.md` — updated script index</li>
+<li>`.DS_Store`, `scripts/.DS_Store` — removed from tracking</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>This was the period when Ghostty was becoming the primary terminal, replacing Terminal.app for Claude Code work.</li>
+<li>The `~/keybindings` path reference indicates a separate keybindings repo existed on the machine.</li>
+<li>The rapid commit cadence (7 commits in ~1 hour) suggests manual testing between each change — each fix was a reaction to runtime behavior.</li>
+<li>The health check system was an early precursor to what would later become the beads-based health check workflow.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Chezmoi Dotfile Sync Script</span>
+                <span class="session-meta"><span class="meta-date">2025-12-21</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated</span> <span class="meta-sep">/</span> <span class="meta-session">reconstr</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">scripts</span><span class="tag">chezmoi</span><span class="tag">dotfiles</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><p>> [!info] Reconstructed from git history — no live session notes exist for this date.</p>
+<h2>Summary</h2>
+<p>Added a Raycast script command for syncing dotfiles via chezmoi. A focused, single-commit session at ~5 AM on mxb3.</p>
+<h2>What was accomplished</h2>
+<h3>chezmoi-update.sh</h3>
+<p>Created a 100-line Raycast script command that wraps <code class="inline">chezmoi update</code> for quick dotfile synchronization from Raycast. Updated the scripts README index to include it.</p>
+<h2>Files created</h2>
+<ul>
+<li>`scripts/chezmoi-update.sh` — Raycast script command for chezmoi dotfile sync (100 lines)</li>
+<li>`scripts/README.md` — updated index</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>This was part of a broader multi-machine setup where chezmoi managed dotfile consistency across mxb, mxb3, and mx3.</li>
+<li>The script was designed to be invoked directly from Raycast's command palette without opening a terminal.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Claude Usage Extension and Script Consolidation</span>
+                <span class="session-meta"><span class="meta-date">2025-12-13</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb3</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated</span> <span class="meta-sep">/</span> <span class="meta-session">reconstr</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">claude-usage</span><span class="tag">scripts</span><span class="tag">new-extension</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><p>> [!info] Reconstructed from git history — no live session notes exist for this date.</p>
+<h2>Summary</h2>
+<p>Major two-day session (Dec 13-14) that added the Claude Usage Raycast extension and consolidated scattered scripts into the monorepo. The claude-usage extension uses Safari automation via AppleScript to scrape usage data from claude.ai/settings/usage. Also added CLAUDE.md project instructions for the first time.</p>
+<h2>What was accomplished</h2>
+<h3>Claude Usage extension created (Dec 13)</h3>
+<p>Built the full claude-usage extension with multiple commands:</p>
+<ul>
+<li>`show-usage` — usage dashboard with pacing indicators</li>
+<li>`menu-bar` — persistent menubar display with 10-minute auto-refresh</li>
+<li>`daily-summary` — today's Claude Code productivity</li>
+<li>`weekly-summary` and `monthly-summary` — stub commands for later</li>
+</ol>
+<p>The extension uses AppleScript to automate Safari, navigating to the Claude usage page and scraping text content with regex parsing. The <code class="inline">applescript.ts</code> utility handles both interactive mode (opens Safari if needed) and quiet mode (reads existing tabs only, for background refresh).</p>
+<h3>Scripts added (Dec 13-14)</h3>
+<ul>
+<li>`kbexp.sh` — launch keybinding explorer</li>
+<li>`cctimeline.sh` — launch Claude Code timeline</li>
+<li>`claude-usage-quick-ask.sh` — quick CLI check of Claude usage stats</li>
+<li>`.scripts/update-readme.sh` — auto-generates scripts README from metadata</li>
+<li>Pre-push hook to update README before pushing</li>
+</ol>
+<h3>Script consolidation (Dec 14)</h3>
+<p>Migrated scripts from <code class="inline">~/code/projects/scripts/</code> into the monorepo:</p>
+<ul>
+<li>`abb-quick-replies-ky-house-chrome-profile.sh`</li>
+<li>`new-git-project-directory.sh`</li>
+<li>`template-script-for-raycast.sh`</li>
+</ol>
+<h3>Project-level CLAUDE.md</h3>
+<p>Added the first CLAUDE.md with project instructions for Claude Code sessions — architecture notes, development commands, Safari automation requirements.</p>
+<h2>Files created</h2>
+<ul>
+<li>`extensions/claude-usage/` — full extension (src, package.json, README, CHANGELOG)</li>
+<li>`extensions/claude-usage/src/show-usage.tsx` — main usage dashboard</li>
+<li>`extensions/claude-usage/src/daily-summary.tsx` — productivity summary (646 lines)</li>
+<li>`extensions/claude-usage/src/menu-bar.tsx` — menubar command</li>
+<li>`extensions/claude-usage/src/utils/applescript.ts` — Safari automation core</li>
+<li>`extensions/claude-usage/src/utils/git.ts` — git status helpers</li>
+<li>`CLAUDE.md` — project instructions (179 lines)</li>
+<li>`scripts/cctimeline.sh`, `scripts/kbexp.sh`, `scripts/claude-usage-quick-ask.sh`</li>
+<li>`scripts/.scripts/update-readme.sh` — README auto-generator</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>This was done on `mxb3`, a different machine from the initial commit's `mxb`.</li>
+<li>The claude-usage extension requires Safari permissions: Develop menu enabled, JavaScript from Apple Events allowed, and Raycast accessibility access.</li>
+<li>The session log files added under `extensions/.claude/sessions/` were early experiment tracking — they would be removed during the Feb 22 consolidation.</li>
+<li>Co-authored with Claude Opus 4.5.</li>
+</ul></div>
+            </div>
+        </details>
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Repository Creation</span>
+                <span class="session-meta"><span class="meta-date">2025-10-14</span> <span class="meta-sep">/</span> <span class="meta-machine">mxb</span> <span class="meta-sep">/</span> <span class="meta-duration">estimated</span> <span class="meta-sep">/</span> <span class="meta-session">reconstr</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">repo-setup</span><span class="tag">balloons</span><span class="tag">balloons-fancy</span><span class="tag">scripts</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><p>> [!info] Reconstructed from git history — no live session notes exist for this date.</p>
+<h2>Summary</h2>
+<p>Created the Raycast extensions monorepo, migrating existing extensions from <code class="inline">~/code/extensions</code> into a consolidated structure. This was the foundational commit establishing the directory layout for extensions, scripts, snippets, and assets.</p>
+<h2>What was accomplished</h2>
+<h3>Repo structure established</h3>
+<p>Set up the core directory layout: <code class="inline">extensions/</code>, <code class="inline">scripts/</code>, <code class="inline">snippets/</code>, <code class="inline">assets/</code>. Added a README with setup and sync instructions.</p>
+<h3>Extensions migrated</h3>
+<ul>
+<li>**Balloons** — Browser-based celebration extension with 30 randomized CSS-animated balloons. Included a nested `balloons/balloons/` directory (duplicate scaffolding from early experimentation).</li>
+<li>**Balloons Fancy** — Full native Swift app with 11 SwiftUI effects (balloons, fireworks, snow, cupcake, campfire, feather, beer, leaves, rainbow, pixels, galaxy). Build script, Info.plist, and all TypeScript command launchers included.</li>
+</ol>
+<h3>Agent scaffolding</h3>
+<p>Added <code class="inline">extensions/agents/</code> with AGENTS.md, INITIAL.md, MOC.md, PROGRESS.md — early SalesSprint-related scaffolding that would later be cleaned up.</p>
+<h3>Docs and templates</h3>
+<ul>
+<li>Extension docs: getting-started, publishing, team-extensions, ui-components, instructions</li>
+<li>Hello-world templates: detail, form, list variants</li>
+<li>Ideas files with extension brainstorms</li>
+</ol>
+<h3>Scripts migrated</h3>
+<p>AppleScript utilities for Finder file content copying, menubar commands, microphone toggle, and an Obsidian vault lister.</p>
+<h2>Files created</h2>
+<ul>
+<li>78 files total across the initial commit</li>
+<li>`extensions/balloons/` — browser balloon animation</li>
+<li>`extensions/balloons-fancy/` — native Swift 11-effect overlay system</li>
+<li>`extensions/balloons-fancy/BalloonsApp/` — full Swift source with build.sh</li>
+<li>`extensions/docs/` — Raycast development documentation</li>
+<li>`extensions/templates/` — hello-world starter templates</li>
+<li>`scripts/` — AppleScript utilities</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>This commit established the monorepo pattern where all custom Raycast work lives in one repo rather than separate repos per extension.</li>
+<li>The `balloons/balloons/` nested directory was accidental duplication and would be cleaned up later.</li>
+<li>The `extensions/agents/` directory was SalesSprint scaffolding, not related to Raycast extensions — also cleaned up later.</li>
+<li>Machine was `mxb` (primary Mac).</li>
+</ul></div>
+            </div>
+        </details>
+
+    <div class="footer">
+        <span>Project Journal v0.1</span>
+        <a href="git@github.com:loudoguno/raycast">GitHub</a>
+    </div>
+</div>
+</body>
+</html>
