@@ -1,0 +1,85 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "git-forges",
+  "title": "GitForges",
+  "description": "Quick search across your GitHub and Forgejo repositories",
+  "icon": "extension-icon.png",
+  "author": "loudog",
+  "categories": ["Developer Tools"],
+  "license": "MIT",
+  "preferences": [
+    {
+      "name": "githubToken",
+      "type": "password",
+      "required": false,
+      "title": "GitHub Token",
+      "description": "GitHub PAT with repo, read:org, notifications, gist, workflow, project scopes"
+    },
+    {
+      "name": "forgejoUrl",
+      "type": "textfield",
+      "required": false,
+      "title": "Forgejo Instance URL",
+      "description": "Base URL of your Forgejo instance (e.g. https://git.example.com)",
+      "placeholder": "https://git.example.com"
+    },
+    {
+      "name": "forgejoToken",
+      "type": "password",
+      "required": false,
+      "title": "Forgejo Token",
+      "description": "Forgejo access token (Settings \u2192 Applications \u2192 Generate New Token)"
+    },
+    {
+      "name": "localScanPaths",
+      "type": "textfield",
+      "required": false,
+      "title": "Local Repo Scan Paths",
+      "description": "Comma-separated paths to scan for local repos",
+      "default": "~/code,~/projects,~/Developer,~/src,~/repos,~/github"
+    },
+    {
+      "name": "primaryProvider",
+      "type": "dropdown",
+      "required": false,
+      "title": "Primary Provider",
+      "description": "When a repo exists on both forges, which one to open by default",
+      "default": "recent",
+      "data": [
+        { "title": "Most Recently Pushed", "value": "recent" },
+        { "title": "GitHub", "value": "github" },
+        { "title": "Forgejo", "value": "forgejo" }
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "name": "quick-search",
+      "title": "Quick Search",
+      "subtitle": "GitForges",
+      "description": "Fuzzy search your GitHub and Forgejo repositories",
+      "mode": "view"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^1.104.0",
+    "@raycast/utils": "^2.2.0",
+    "octokit": "^4.1.2",
+    "dayjs": "^1.11.13"
+  },
+  "devDependencies": {
+    "@raycast/eslint-config": "^1.0.11",
+    "@types/node": "22.x",
+    "@types/react": "19.x",
+    "eslint": "^9.0.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.8.0"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop",
+    "fix-lint": "ray lint --fix",
+    "lint": "ray lint",
+    "publish": "npx @raycast/api@latest publish"
+  }
+}

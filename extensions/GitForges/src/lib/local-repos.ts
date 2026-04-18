@@ -1,7 +1,7 @@
 import { execSync } from "child_process";
 import { existsSync } from "fs";
 import { getPreferenceValues } from "@raycast/api";
-import type { LocalRepoInfo, Preferences } from "./types";
+import type { LocalRepoInfo, MergedRepo, Preferences } from "./types";
 
 function expandHome(p: string): string {
   if (p.startsWith("~/")) {
@@ -19,35 +19,41 @@ function exec(cmd: string, cwd: string): string {
 }
 
 /**
- * Given a repo full name like "owner/repo-name", search local scan paths
- * for a directory that matches the repo name and contains a .git folder
- * with a remote pointing to the same GitHub repo.
+ * Look for a local clone of any of a merged repo's variants. Matches if a
+ * candidate directory's git remotes mention any variant's host + full name.
  */
-export function findLocalRepo(repoFullName: string): LocalRepoInfo | null {
+export function findLocalRepo(merged: MergedRepo): LocalRepoInfo | null {
   const { localScanPaths } = getPreferenceValues<Preferences>();
   if (!localScanPaths) return null;
 
-  const repoName = repoFullName.split("/")[1];
   const paths = localScanPaths.split(",").map((p) => expandHome(p.trim()));
+  const repoName = merged.displayName;
+
+  // Build a list of remote-URL fragments any variant could appear under
+  const remoteFragments: string[] = [];
+  for (const v of merged.variants) {
+    remoteFragments.push(v.fullName.toLowerCase());
+    try {
+      const host = new URL(v.htmlUrl).hostname.toLowerCase();
+      remoteFragments.push(`${host}/${v.fullName.toLowerCase()}`);
+      remoteFragments.push(`${host}:${v.fullName.toLowerCase()}`); // ssh form
+    } catch {
+      // ignore malformed urls
+    }
+  }
 
   for (const basePath of paths) {
-    // Check direct match: basePath/repo-name
     const candidate = `${basePath}/${repoName}`;
     if (!existsSync(`${candidate}/.git`)) continue;
 
-    // Verify the remote matches this GitHub repo
-    const remotes = exec("git remote -v", candidate);
-    const normalizedFullName = repoFullName.toLowerCase();
-    if (!remotes.toLowerCase().includes(normalizedFullName)) continue;
+    const remotes = exec("git remote -v", candidate).toLowerCase();
+    if (!remoteFragments.some((f) => remotes.includes(f))) continue;
 
-    // It's a match — gather status
     const currentBranch =
       exec("git branch --show-current", candidate) || "HEAD";
-
     const statusOutput = exec("git status --porcelain", candidate);
     const hasUncommittedChanges = statusOutput.length > 0;
 
-    // Fetch silently to compare with remote (best effort)
     exec("git fetch --quiet 2>/dev/null", candidate);
 
     let ahead = 0;

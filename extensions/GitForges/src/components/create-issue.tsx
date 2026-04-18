@@ -9,33 +9,29 @@ import {
   open,
 } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
-import {
-  createIssue,
-  fetchLabels,
-  fetchMilestones,
-  fetchCollaborators,
-} from "../lib/github-client";
+import { getProvider } from "../lib/providers";
+import type { Repo } from "../lib/types";
 
-export function CreateIssueForm({
-  owner,
-  repo,
-}: {
-  owner: string;
-  repo: string;
-}) {
+const PROVIDER_LABEL: Record<Repo["provider"], string> = {
+  github: "GitHub",
+  forgejo: "Forgejo",
+};
+
+export function CreateIssueForm({ repo }: { repo: Repo }) {
   const { pop } = useNavigation();
+  const provider = getProvider(repo.provider);
 
-  const { data: labels, isLoading: labelsLoading } = usePromise(fetchLabels, [
-    owner,
-    repo,
-  ]);
+  const { data: labels, isLoading: labelsLoading } = usePromise(
+    provider.fetchLabels.bind(provider),
+    [repo.owner.login, repo.name],
+  );
   const { data: milestones, isLoading: milestonesLoading } = usePromise(
-    fetchMilestones,
-    [owner, repo],
+    provider.fetchMilestones.bind(provider),
+    [repo.owner.login, repo.name],
   );
   const { data: collaborators, isLoading: collabsLoading } = usePromise(
-    fetchCollaborators,
-    [owner, repo],
+    provider.fetchCollaborators.bind(provider),
+    [repo.owner.login, repo.name],
   );
 
   const isLoading = labelsLoading || milestonesLoading || collabsLoading;
@@ -61,7 +57,7 @@ export function CreateIssueForm({
         title: "Creating issue...",
       });
 
-      const issueUrl = await createIssue(owner, repo, {
+      const issueUrl = await provider.createIssue(repo.owner.login, repo.name, {
         title: values.title.trim(),
         body: values.body || undefined,
         labels: values.labels.length > 0 ? values.labels : undefined,
@@ -73,7 +69,7 @@ export function CreateIssueForm({
 
       await showToast({
         style: Toast.Style.Success,
-        title: "Issue created",
+        title: `Issue created on ${PROVIDER_LABEL[repo.provider]}`,
         primaryAction: {
           title: "Open in Browser",
           onAction: () => open(issueUrl),
@@ -93,7 +89,7 @@ export function CreateIssueForm({
   return (
     <Form
       isLoading={isLoading}
-      navigationTitle={`New Issue · ${owner}/${repo}`}
+      navigationTitle={`New Issue \u00b7 ${repo.fullName} (${PROVIDER_LABEL[repo.provider]})`}
       actions={
         <ActionPanel>
           <Action.SubmitForm

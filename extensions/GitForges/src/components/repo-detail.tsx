@@ -2,22 +2,23 @@ import { Action, ActionPanel, Detail, Icon } from "@raycast/api";
 import { usePromise } from "@raycast/utils";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { fetchRepoDetails } from "../lib/github-client";
+import { getProvider } from "../lib/providers";
+import type { Repo } from "../lib/types";
 import { CreateIssueForm } from "./create-issue";
 
 dayjs.extend(relativeTime);
 
-export function RepoDetailView({
-  owner,
-  name,
-}: {
-  owner: string;
-  name: string;
-}) {
-  const { data: details, isLoading } = usePromise(fetchRepoDetails, [
-    owner,
-    name,
-  ]);
+const PROVIDER_LABEL: Record<Repo["provider"], string> = {
+  github: "GitHub",
+  forgejo: "Forgejo",
+};
+
+export function RepoDetailView({ repo: initial }: { repo: Repo }) {
+  const provider = getProvider(initial.provider);
+  const { data: details, isLoading } = usePromise(
+    (owner: string, name: string) => provider.fetchRepoDetails(owner, name),
+    [initial.owner.login, initial.name],
+  );
 
   if (isLoading || !details) {
     return <Detail isLoading={true} />;
@@ -32,43 +33,43 @@ export function RepoDetailView({
     contributors,
     openPRs,
   } = details;
+  const providerName = PROVIDER_LABEL[repo.provider];
 
-  const badges: string[] = [];
-  if (repo.private) badges.push("🔒 Private");
-  if (repo.fork) badges.push("🍴 Fork");
-  if (repo.archived) badges.push("📦 Archived");
+  const badges: string[] = [`**${providerName}**`];
+  if (repo.private) badges.push("\ud83d\udd12 Private");
+  if (repo.fork) badges.push("\ud83c\udf74 Fork");
+  if (repo.archived) badges.push("\ud83d\udce6 Archived");
 
-  const metadataMarkdown = [
+  const md = [
     `# ${repo.fullName}`,
     "",
     repo.description ? `> ${repo.description}` : "",
     "",
-    badges.length > 0 ? badges.join(" · ") : "",
+    badges.join(" \u00b7 "),
     "",
     "---",
     "",
     "| Stat | Value |",
     "| --- | --- |",
-    `| ★ Stars | **${repo.stargazersCount.toLocaleString()}** |`,
-    `| 🍴 Forks | **${repo.forksCount.toLocaleString()}** |`,
-    `| 👁 Watchers | **${repo.watchersCount.toLocaleString()}** |`,
-    `| 🔀 Branches | **${branches}** |`,
-    `| 📋 Open PRs | **${openPRs}** |`,
-    `| ⚠️ Open Issues | **${repo.openIssuesCount}** |`,
-    `| 📦 Releases | **${releases}** |`,
-    `| 👥 Contributors | **${contributors}** |`,
-    repo.language ? `| 💻 Language | **${repo.language}** |` : "",
-    repo.license ? `| 📄 License | **${repo.license}** |` : "",
-    `| 📏 Size | **${formatSize(repo.size)}** |`,
-    `| 🕐 Created | **${dayjs(repo.createdAt).format("MMM D, YYYY")}** |`,
-    `| 🔄 Last Push | **${dayjs(repo.pushedAt).fromNow()}** |`,
+    `| \u2605 Stars | **${repo.stargazersCount.toLocaleString()}** |`,
+    `| \ud83c\udf74 Forks | **${repo.forksCount.toLocaleString()}** |`,
+    `| \ud83d\udd00 Branches | **${branches}** |`,
+    `| \ud83d\udccb Open PRs | **${openPRs}** |`,
+    `| \u26a0\ufe0f Open Issues | **${repo.openIssuesCount}** |`,
+    `| \ud83d\udce6 Releases | **${releases}** |`,
+    `| \ud83d\udc65 Contributors | **${contributors}** |`,
+    repo.language ? `| \ud83d\udcbb Language | **${repo.language}** |` : "",
+    repo.license ? `| \ud83d\udcc4 License | **${repo.license}** |` : "",
+    `| \ud83d\udccf Size | **${formatSize(repo.size)}** |`,
+    `| \ud83d\udd50 Created | **${dayjs(repo.createdAt).format("MMM D, YYYY")}** |`,
+    `| \ud83d\udd04 Last Push | **${dayjs(repo.pushedAt).fromNow()}** |`,
     "",
     latestCommit
       ? [
           "### Latest Commit",
           "",
           `\`${latestCommit.sha}\` ${latestCommit.message}`,
-          `_by ${latestCommit.author} · ${dayjs(latestCommit.date).fromNow()}_`,
+          `_by ${latestCommit.author} \u00b7 ${dayjs(latestCommit.date).fromNow()}_`,
         ].join("\n")
       : "",
     "",
@@ -87,17 +88,20 @@ export function RepoDetailView({
 
   return (
     <Detail
-      markdown={metadataMarkdown}
-      navigationTitle={repo.fullName}
+      markdown={md}
+      navigationTitle={`${repo.fullName} (${providerName})`}
       actions={
         <ActionPanel>
           <ActionPanel.Section title="Open">
-            <Action.OpenInBrowser title="Open on GitHub" url={repo.htmlUrl} />
+            <Action.OpenInBrowser
+              title={`Open on ${providerName}`}
+              url={repo.htmlUrl}
+            />
             {repo.homepage && (
               <Action.OpenInBrowser
                 title="Open Homepage"
                 url={repo.homepage}
-                icon={Icon.Globe}
+                icon={Icon.House}
                 shortcut={{ modifiers: ["cmd", "shift"], key: "o" }}
               />
             )}
@@ -108,7 +112,7 @@ export function RepoDetailView({
               title="Create Issue"
               icon={Icon.Plus}
               shortcut={{ modifiers: ["cmd"], key: "i" }}
-              target={<CreateIssueForm owner={owner} repo={name} />}
+              target={<CreateIssueForm repo={repo} />}
             />
           </ActionPanel.Section>
 
@@ -122,16 +126,6 @@ export function RepoDetailView({
               title="Pull Requests"
               url={`${repo.htmlUrl}/pulls`}
               icon={Icon.ArrowRight}
-            />
-            <Action.OpenInBrowser
-              title="Actions"
-              url={`${repo.htmlUrl}/actions`}
-              icon={Icon.Play}
-            />
-            <Action.OpenInBrowser
-              title="Settings"
-              url={`${repo.htmlUrl}/settings`}
-              icon={Icon.Gear}
             />
           </ActionPanel.Section>
 
