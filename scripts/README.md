@@ -24,6 +24,7 @@ Custom Raycast script commands for quick actions and automation.
 | `kbexp.sh` | kbexp | Launch kbexp keybinding explorer |
 | `keybindings-claude.sh` | Keybindings Claude | Open Claude Code in keybinding workspace |
 | `new-git-project-directory.sh` | New Git Project | create a new directory in ~/projects and initialize as a git directory |
+| `repo-status.sh` | Repo Status | Fetch and show status of key repos — local, remote, and cross-machine |
 | `restart-all.sh` | Restart Keybinding Apps | Reload Goku, Karabiner, Slate, Raycast, Slidepad |
 | `stickies-grid.sh` | Stickies Grid | Arrange stickies in a uniform grid pattern |
 | `stickies-info.sh` | Stickies Info | Display information about all stickies |

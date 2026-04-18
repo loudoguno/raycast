@@ -391,6 +391,26 @@ cd extensions/omnifocus && npm install && npm run build && npm run dev
 # Stop dev server (⌃+C) once Raycast loads the extension — it persists after that
 ```
 
+### Cross-machine sync check
+
+This repo is developed across two machines (`mxb` and `mx3`). On session start, after checking the hostname, SSH into the **other** machine and check for uncommitted or unpushed work:
+
+```bash
+# Determine the other machine
+OTHER=$(if [ "$(hostname -s)" = "mxb" ]; then echo "mx3"; else echo "mxb"; fi)
+
+# Check for uncommitted changes
+ssh $OTHER 'cd ~/code/raycast && git status --short'
+
+# Check for unpushed commits
+ssh $OTHER 'cd ~/code/raycast && git log --oneline @{u}..HEAD 2>/dev/null'
+```
+
+If either check shows results:
+1. Tell Lou what was found (uncommitted files, unpushed commits, or both)
+2. Offer to commit and push via SSH so the work is available on the current machine
+3. After pushing from the other machine, `git pull` locally
+
 ## Issue Tracking with Beads
 
 This repo uses **[beads](https://github.com/steveyegge/beads)** (`bd` CLI) for issue tracking. Issues live in `.beads/` and sync via git.
