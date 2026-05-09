@@ -234,6 +234,18 @@ end tell
 return "{\\"title\\":\\"" & my escapeJSON(winTitle) & "\\",\\"url\\":\\"\\"}"
 `),
 
+  "sidenotes.applescript": withEscape(`tell application "SideNotes"
+	try
+		set current_note to current note
+		set note_id to id of current_note
+		set note_title to title of current_note
+		set note_url to "sidenotes://open/" & note_id
+		return "{\\"title\\":\\"" & my escapeJSON(note_title) & "\\",\\"url\\":\\"" & note_url & "\\"}"
+	on error
+		return "{\\"title\\":\\"\\",\\"url\\":\\"\\"}"
+	end try
+end tell`),
+
   "preview.applescript": withEscape(`tell application "Preview"
 	set d to front document
 	set docName to name of d

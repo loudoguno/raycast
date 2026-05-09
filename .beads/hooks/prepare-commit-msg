@@ -22,3 +22,15 @@ if command -v bd >/dev/null 2>&1; then
   if [ $_bd_exit -ne 0 ]; then exit $_bd_exit; fi
 fi
 # --- END BEADS INTEGRATION v0.61.0 ---
+
+# --- BEGIN AGENT PROVENANCE DELEGATION ---
+# Beads sets core.hooksPath=.beads/hooks, bypassing the global hook.
+# Delegate to the canonical agent-provenance hook so there is one source of truth.
+# Warn loudly to stderr if canonical hook is absent — commit still succeeds.
+# If Beads regenerates this file, restore this block.
+if [ ! -x "$HOME/.config/git/hooks/prepare-commit-msg" ]; then
+  echo "warning: canonical agent provenance hook missing or not executable: $HOME/.config/git/hooks/prepare-commit-msg" >&2
+  exit 0
+fi
+exec "$HOME/.config/git/hooks/prepare-commit-msg" "$@"
+# --- END AGENT PROVENANCE DELEGATION ---

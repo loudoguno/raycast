@@ -106,7 +106,7 @@ export const handlers: Record<string, HandlerConfig> = {
     script: "preview.applescript",
   },
   "com.apple.Terminal": { strategy: "accessibility" },
-  "com.apptorium.SideNotes": { strategy: "accessibility" },
+  "com.apptorium.SideNotes": { strategy: "applescript", script: "sidenotes.applescript" },
   "com.notion.id": { strategy: "accessibility" },
   "notion.id": { strategy: "accessibility" },
 
