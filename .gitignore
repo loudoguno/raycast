@@ -29,6 +29,9 @@ tmp/
 # Beads transient files
 .beads/*.lock
 
+# Scheduled tasks runtime lock
+.claude/scheduled_tasks.lock
+
 # Algorithm PRD working directory
 MEMORY/
 
