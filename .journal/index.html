@@ -329,13 +329,80 @@ html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
             <a href="git@github.com:loudoguno/raycast">git@github.com:loudoguno/raycast</a>
         </div>
         <div class="header-meta">
-            <span>23 sessions</span>
-            <span>ee4d759</span>
-            <span>built 2026-04-10 14:26</span>
+            <span>24 sessions</span>
+            <span>b3da00b</span>
+            <span>built 2026-05-03 21:55</span>
         </div>
     </div>
 
     
+        <details class="session-card" open>
+            <summary class="session-header">
+                <span class="session-title">Raycast Housekeeping — MXB Sync Check & Work Triage</span>
+                <span class="session-meta"><span class="meta-date">2026-05-03</span> <span class="meta-sep">/</span> <span class="meta-machine">mx3 (MacBook Pro, Apple M3 Max, 128 GB)</span> <span class="meta-sep">/</span> <span class="meta-duration">~30 minutes</span> <span class="meta-sep">/</span> <span class="meta-agents">0 agents</span> <span class="meta-sep">/</span> <span class="meta-session">8ec7ad9f</span></span>
+            </summary>
+            <div class="session-body">
+                <div class="session-tags"><span class="tag">housekeeping</span><span class="tag">cross-machine-sync</span><span class="tag">triage</span><span class="tag">beads</span></div>
+                
+            <details class="commits-detail">
+                <summary>Commits (1)</summary>
+                <ul class="commit-list"></ul>
+            </details>
+                <div class="session-content"><h2>Summary</h2>
+<p>Lou opened the raycast repo on mx3 and asked for a status check + a survey of what mxb had pushed since the last pull and whether any work was queued. Triage only — no commits, pulls, pushes, or deletions were performed. Decisions on what to do next were left to the user.</p>
+<h2>What was accomplished</h2>
+<h3>Branch state survey</h3>
+<ul>
+<li>Current branch `burn/ucl-sidenotes-20260408-1124` is **1 commit ahead** of origin (unpushed: `b3da00b refactor: delegate provenance hook to canonical via exec`)</li>
+<li>Local `main` is **6 commits behind** `origin/main` — all from mxb, dated 2026-04-18</li>
+<li>Other branches (`burn/loutools-20260408-0433`, `claude/refine-local-plan-HcDrL`) are in sync</li>
+</ol>
+<h3>MXB delta inventory (the 6 unmerged commits on origin/main)</h3>
+<ul>
+<li>`736a892` — Gitignore `.claude/scheduled_tasks.lock`</li>
+<li>`ecdfc99` — Cross-machine sync docs + `scripts/repo-status.sh` (fetch-only multi-repo dashboard with hostname detection + SSH); retired `scripts/chezmoi-update.sh`</li>
+<li>`b4bd620` — 3 backfilled `.journal/sessions/` entries</li>
+<li>`0011a85` — Merge PR #18: NEW custom GitHub extension (`extensions/GitHub/` — Quick Search, repo detail, create issue), 1040 lines / 10 files</li>
+<li>`d0f464f` — The GitHub extension itself</li>
+</ol>
+<h3>Working-tree anomaly</h3>
+<ul>
+<li>Found `extensions/feedback-loop/~/Library/Preferences/com.apple.LaunchServices.QuarantineEventsV2` — a literal `~` directory created on 2026-04-15 21:04. Some script/app expanded `"~"` as a path component instead of resolving to `$HOME` and macOS dumped a quarantine file inside the repo. Safe to delete after grepping for the source.</li>
+</ol>
+<h3>Backlog signals</h3>
+<ul>
+<li>**Beads**: 21 ready issues. Top P1s:</li>
+<li>`raycast-8eu.1` — Zero test coverage across all 11 extensions</li>
+<li>`raycast-8eu.2` — Monolithic components need decomposition</li>
+<li>`raycast-8eu.2.1` — `list-sessions.tsx` is 657 lines</li>
+<li>`raycast-8eu.2.2` — `daily-summary.tsx` is 646 lines</li>
+<li>**PAI health**: 50 unresolved doc-drift items in `~/.claude/MEMORY/STATE/doc-review-queue.json`</li>
+</ol>
+<h2>Key decisions</h2>
+<ol>
+<li>**Did NOT auto-merge mxb's commits into the active feature branch** — `burn/ucl-sidenotes-...` is mid-work, so any merge/rebase decision was deferred to the user.</li>
+<li>**Did NOT delete the bogus `~/` directory** — it's user data (even if junk); user should confirm and ideally find the source bug first.</li>
+<li>**Did NOT push the unpushed sidenotes commit** — left to user since the branch is mid-work.</li>
+</ol>
+<h2>Files created</h2>
+<p>None. This was read-only triage. The only artifact is this journal entry + the global CloudClaude entry.</p>
+<h2>Open issues</h2>
+<ul>
+<li>The literal-tilde path bug somewhere in (likely) `extensions/feedback-loop/` source — still unidentified. Look for `path.join("~", ...)` or string-concat with `"~"` instead of `os.homedir()`.</li>
+<li>6-commit gap on `main` is unresolved.</li>
+<li>Unpushed `b3da00b` on `burn/ucl-sidenotes-20260408-1124` is unresolved.</li>
+</ol>
+<h2>What a future agent needs to know</h2>
+<ul>
+<li>**Don't reflexively `git pull` on `main`** without confirming with Lou — he sometimes wants to inspect remote commits before fast-forwarding.</li>
+<li>**The active feature branch (`burn/ucl-sidenotes-...`) is mid-work.** If asked to integrate mxb's `main` changes, prefer a rebase on top of the unpushed commit — Lou's memory note says "mx3 + mxb diverge often; prefer rebase to reconcile."</li>
+<li>**The new `extensions/GitHub/` extension exists on `origin/main` but not in the working tree yet.** It's a fresh custom build (not a fork of the store extension) with Quick Search, repo detail, create-issue. Once `main` is pulled it'll appear at `extensions/GitHub/`. Update `CLAUDE.md`'s "Repository Overview" to add it as extension #10 when integrating.</li>
+<li>**`scripts/repo-status.sh`** (also new on `origin/main`) is the canonical multi-repo status dashboard — fetch-only, hostname-aware, can SSH the other machine. Use it before manual `git status` sweeps.</li>
+<li>**Beads is the issue tracker.** Use `bd ready` for actionable work, `bd show <id>` for details. P1 health-check findings are children of an epic — start with `bd children <epic-id>` to see the full tree before picking one off.</li>
+<li>**The `~/` directory in `extensions/feedback-loop/`** must NOT be committed. Once deleted, ideally add a guard (gitignore or pre-commit hook) so it can't recur.</li>
+</ul></div>
+            </div>
+        </details>
         <details class="session-card" open>
             <summary class="session-header">
                 <span class="session-title">Raycast Burndown — Promptbox Issue #6 + Feedback-Loop Terminal Fix</span>
