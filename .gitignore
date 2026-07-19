@@ -39,3 +39,6 @@ MEMORY/
 
 # Personal workspace (per-machine, backed up by NAS)
 lous-workspace/
+
+# pwa-forge: compiled per-machine via scripts/pwa-forge/build.sh
+scripts/pwa-forge/pwa-forge
