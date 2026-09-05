@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  uno.loudog.push-to-prompt-reap — nightly cleanup of push-to-prompt launcher sessions.
+
+  Stops ONLY Remote Control sessions this launcher created (display name starts with 🗼)
+  that have been idle more than 24 h. Pre-existing bridges are never touched.
+
+  Created 2026-09-04 by Sai-mx3 (Engineer agent) per WORK#14 decision D4.
+  Canonical copy: ~/code/raycast/scripts/uno.loudog.push-to-prompt-reap.plist
+  Installed at:   ~/Library/LaunchAgents/uno.loudog.push-to-prompt-reap.plist
+  Install:        launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/uno.loudog.push-to-prompt-reap.plist
+  Verify:         launchctl list | grep push-to-prompt
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>uno.loudog.push-to-prompt-reap</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/loudog/.local/bin/push-to-prompt</string>
+        <string>reap</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>4</integer>
+        <key>Minute</key>
+        <integer>17</integer>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/loudog/.local/bin:/Users/loudog/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <key>HOME</key>
+        <string>/Users/loudog</string>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/loudog/.local/state/push-to-prompt/reap.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/loudog/.local/state/push-to-prompt/reap.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>
