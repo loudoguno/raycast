@@ -1,0 +1,324 @@
+#!/bin/bash
+# push-to-prompt — fire dictated text into a Claude Code session chosen by a single key.
+#
+# PURPOSE   Hold fn+shift+KEY, talk (Wispr Flow), release, return. The text launches a
+#           background Claude Code session whose cwd and flags come from KEY, posts a
+#           macOS notification within ~1 s, and opens the session's claude.ai page in
+#           Chrome within ~20 s. No terminal, no cd, no window to manage.
+# SCOPE     mx3 (any Mac with Claude Code >= 2.1.261 and a profiles.tsv). Personal tool.
+# CREATED   2026-09-04 by Sai-mx3 (Engineer agent) for Lou DeSantis, per WORK#14.
+#           Session: mx3: 🗂️ work-board first-principles sweep
+# REQUIRED  Optional convenience layer. Nothing else depends on it.
+# RELATED   profiles.tsv ......... scripts/push-to-prompt-profiles.tsv
+#                                  -> ~/.config/push-to-prompt/profiles.tsv (symlink)
+#           Raycast commands ..... scripts/push-to-prompt-{k,l,c,q}.sh
+#           dir resolver for c ... scripts/claude-code-here.sh (same repo, same AppleScript)
+#           reaper launchd job ... ~/Library/LaunchAgents/uno.loudog.push-to-prompt-reap.plist
+#           ISA .................. ~/.claude/LIFEOS/MEMORY/WORK/20260903-push-to-prompt-build/ISA.md
+#           issue ................ https://github.com/loudoguno/WORK/issues/14
+#
+# USAGE
+#   push-to-prompt <k|l|c|q> "text to send"   fire a session
+#   push-to-prompt <key> --dry-run "text"     print the exact claude command, fire nothing
+#   push-to-prompt last                       reopen the most recently fired session URL
+#   push-to-prompt reap [--dry-run]           stop launcher sessions idle > REAP_MAX_IDLE_HOURS
+#   push-to-prompt profiles                   print the resolved profile table
+#
+# CLAUDE CODE 2.1.261 FACTS (verified 2026-09-04 by probe, not recalled — these bit us)
+#   * `--remote-control <name>` does NOT set the display name; the name is auto-derived
+#     from the prompt. `-n/--name` is what sets it, and the reaper keys off the name
+#     prefix, so BOTH flags are passed.
+#   * `--bg` writes ~/.claude/sessions/<pid>.json a few seconds AFTER it returns, so the
+#     bridge id must be polled for, not read immediately.
+#   * `--bare` bills ANTHROPIC_API_KEY (OAuth refused). Never use it. `q` uses --effort low.
+#   * A session launched from inside a Claude Code shell inherits CLAUDECODE /
+#     CLAUDE_CODE_* / CLAUDE_EFFORT and misbehaves; they are stripped below.
+#   * PATH must carry ~/.bun/bin or every LifeOS hook dies with "env: bun: not found"
+#     and the session comes up without its identity.
+
+set -uo pipefail
+
+# ---------------------------------------------------------------- configuration
+TAG="🗼"                                   # launcher marker; the reaper stops ONLY these
+PROFILES="${PUSH_TO_PROMPT_PROFILES:-$HOME/.config/push-to-prompt/profiles.tsv}"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/push-to-prompt"
+LAST_URL_FILE="$STATE_DIR/last-url"
+LOG_FILE="$STATE_DIR/push-to-prompt.log"
+BRIDGE_TIMEOUT="${PUSH_TO_PROMPT_BRIDGE_TIMEOUT:-20}"
+REAP_MAX_IDLE_HOURS="${PUSH_TO_PROMPT_REAP_HOURS:-24}"
+WATCH_TIMEOUT="${PUSH_TO_PROMPT_WATCH_TIMEOUT:-900}"
+
+# ~/.bun/bin is load-bearing: LifeOS hooks shell out to bun.
+export PATH="$HOME/.local/bin:$HOME/.bun/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+CLAUDE_BIN="$(command -v claude || echo "$HOME/.local/bin/claude")"
+
+STRIP=(env
+  -u CLAUDECODE -u CLAUDE_CODE_ENTRYPOINT -u CLAUDE_CODE_SESSION_ID
+  -u CLAUDE_CODE_CHILD_SESSION -u CLAUDE_CODE_EXECPATH -u CLAUDE_EFFORT
+  -u CLAUDE_CODE_MESSAGING_SOCKET -u CLAUDE_CODE_MESSAGING_TOKEN
+  -u CLAUDE_CODE_SESSION_ACCESS_TOKEN -u CLAUDE_PID
+  -u CLAUDE_CODE_FORK_SUBAGENT -u CLAUDE_CODE_WORKER_EPOCH
+  -u CLAUDE_CODE_SSE_PORT -u CLAUDE_CODE_MAX_OUTPUT_TOKENS
+)
+
+mkdir -p "$STATE_DIR"
+
+# ---------------------------------------------------------------- helpers
+log()  { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >>"$LOG_FILE"; }
+osa_str() { printf '"%s"' "$(printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')"; }
+
+notify() {
+  local title="$1" msg="$2"
+  if command -v terminal-notifier >/dev/null 2>&1; then
+    terminal-notifier -title "$title" -message "$msg" >/dev/null 2>&1 &
+  else
+    osascript -e "display notification $(osa_str "$msg") with title $(osa_str "$title")" >/dev/null 2>&1 &
+  fi
+}
+
+die()  { notify "push-to-prompt failed" "$*"; printf 'push-to-prompt: %s\n' "$*" >&2; log "ERROR $*"; exit 1; }
+
+expand_tilde() { case "$1" in "~") echo "$HOME";; "~/"*) echo "$HOME/${1#\~/}";; *) echo "$1";; esac; }
+
+# `c` profile: frontmost kitty cwd -> frontmost Finder folder -> ~/code.
+# Never silent (the resolved path goes in the name and the notification), never bare ~.
+resolve_here() {
+  local d=""
+  if command -v kitty >/dev/null 2>&1; then
+    d=$(kitty @ ls 2>/dev/null | python3 -c 'import json,sys
+try: ws=json.load(sys.stdin)
+except Exception: sys.exit(0)
+for w in ws:
+    if not w.get("is_focused"): continue
+    for t in w.get("tabs",[]):
+        if not t.get("is_focused"): continue
+        for p in t.get("windows",[]):
+            if p.get("is_focused") and p.get("cwd"):
+                print(p["cwd"]); sys.exit(0)' 2>/dev/null)
+  fi
+  if [[ -z "$d" ]]; then
+    d=$(osascript -e 'tell application "Finder"
+        if (count of windows) > 0 then
+          return POSIX path of ((target of front window) as alias)
+        else
+          return ""
+        end if
+      end tell' 2>/dev/null)
+  fi
+  if [[ -z "$d" ]]; then
+    d=$(osascript -e 'tell application "Finder"
+        set sel to selection
+        if (count of sel) > 0 then
+          set f to item 1 of sel
+          if kind of f is "Folder" then
+            return POSIX path of (f as alias)
+          else
+            return POSIX path of ((container of f) as alias)
+          end if
+        else
+          return ""
+        end if
+      end tell' 2>/dev/null)
+  fi
+  d="${d%/}"
+  [[ -z "$d" || "$d" == "$HOME" ]] && d="$HOME/code"
+  echo "$d"
+}
+
+lookup_profile() {
+  local key="$1" line dir flags label
+  [[ -r "$PROFILES" ]] || die "no profiles file at $PROFILES"
+  line=$(awk -F'\t' -v k="$key" '$1==k && $0 !~ /^#/ {print; exit}' "$PROFILES")
+  [[ -n "$line" ]] || die "no profile '$key' in $PROFILES"
+  dir=$(printf '%s' "$line"   | cut -f2)
+  flags=$(printf '%s' "$line" | cut -f3)
+  label=$(printf '%s' "$line" | cut -f4)
+  [[ "$dir" == "AUTO" ]] && dir="$(resolve_here)"
+  dir="$(expand_tilde "$dir")"
+  printf '%s\t%s\t%s\n' "$dir" "$flags" "$label"
+}
+
+# The bridge id appears in ~/.claude/sessions/<pid>.json a few seconds after --bg returns.
+await_bridge_id() {
+  local short="$1" deadline id
+  deadline=$(( $(date +%s) + BRIDGE_TIMEOUT ))
+  while (( $(date +%s) < deadline )); do
+    id=$(python3 -c 'import glob,json,os,sys
+short=sys.argv[1]
+for p in glob.glob(os.path.expanduser("~/.claude/sessions/*.json")):
+    try: d=json.load(open(p))
+    except Exception: continue
+    if str(d.get("sessionId","")).startswith(short) and d.get("bridgeSessionId"):
+        print(d["bridgeSessionId"]); break' "$short" 2>/dev/null)
+    [[ -n "$id" ]] && { echo "$id"; return 0; }
+    sleep 0.4
+  done
+  return 1
+}
+
+# ---------------------------------------------------------------- fire
+cmd_fire() {
+  local key="$1"; shift
+  local dry=0
+  [[ "${1:-}" == "--dry-run" ]] && { dry=1; shift; }
+  local text="${*:-}"
+  [[ -n "$text" ]] || die "nothing to send (empty text)"
+
+  local prof dir flags label
+  prof=$(lookup_profile "$key") || exit 1
+  dir=$(printf '%s' "$prof" | cut -f1)
+  flags=$(printf '%s' "$prof" | cut -f2)
+  label=$(printf '%s' "$prof" | cut -f3)
+  [[ -d "$dir" ]] || die "profile '$key' points at $dir which does not exist"
+
+  # The name carries the tag (reaper), the key, the resolved dir (D2: never silent),
+  # and the opening words so the claude.ai list is readable at a glance.
+  local snippet name
+  snippet=$(printf '%s' "$text" | tr '\n' ' ' | cut -c1-46)
+  name="${TAG}${key} · ${label} · ${dir/#$HOME/~} · ${snippet}"
+
+  local flag_arr=(); [[ -n "$flags" ]] && read -r -a flag_arr <<<"$flags"
+
+  if (( dry )); then
+    printf 'cd %q && \\\n' "$dir"
+    printf '  env'
+    local v; for v in "${STRIP[@]:1}"; do printf ' %s' "$v"; done
+    printf ' \\\n    %q --bg --remote-control %q -n %q' "$CLAUDE_BIN" "$name" "$name"
+    local f; for f in ${flag_arr[@]+"${flag_arr[@]}"}; do printf ' %q' "$f"; done
+    printf ' %q\n' "$text"
+    return 0
+  fi
+
+  local t0 out rc short t_fire
+  t0=$(python3 -c 'import time;print(int(time.time()*1000))')
+  out=$(cd "$dir" && "${STRIP[@]}" "$CLAUDE_BIN" --bg --remote-control "$name" -n "$name" \
+        ${flag_arr[@]+"${flag_arr[@]}"} "$text" 2>&1)
+  rc=$?
+  short=$(printf '%s' "$out" | grep -oE '[0-9a-f]{8}' | head -1)
+  t_fire=$(python3 -c "import time;print(int(time.time()*1000)-$t0)")
+
+  if (( rc != 0 )) || [[ -z "$short" ]]; then
+    die "claude did not start (rc=$rc): $(printf '%s' "$out" | tail -3 | tr '\n' ' ')"
+  fi
+
+  notify "${TAG}${key} fired · ${label}" "${dir/#$HOME/~}  ·  ${snippet}"
+  log "FIRE key=$key id=$short dir=$dir fire_ms=$t_fire text=$snippet"
+
+  local url="" bridge t_url
+  if bridge=$(await_bridge_id "$short"); then
+    url="https://claude.ai/code/$bridge"
+    printf '%s\n' "$url" >"$LAST_URL_FILE"
+    open -a "Google Chrome" "$url" >/dev/null 2>&1 || open "$url" >/dev/null 2>&1
+  fi
+  t_url=$(python3 -c "import time;print(int(time.time()*1000)-$t0)")
+  log "BRIDGE key=$key id=$short url=${url:-NONE} url_ms=$t_url"
+
+  if [[ "${PUSH_TO_PROMPT_NO_WATCH:-0}" != "1" ]]; then
+    ( nohup "$0" __watch "$short" "$key" "$label" >/dev/null 2>&1 & ) 2>/dev/null
+  fi
+
+  printf 'id=%s fire_ms=%s url_ms=%s url=%s\n' "$short" "$t_fire" "$t_url" "${url:-NONE}"
+}
+
+# ---------------------------------------------------------------- completion watcher (F3)
+# Detached. Polls `claude agents --json` until the session leaves the active state, then
+# notifies with the first line of its reply (read out of the session transcript).
+cmd_watch() {
+  local short="$1" key="${2:-?}" label="${3:-}"
+  local deadline saw_active=0
+  deadline=$(( $(date +%s) + WATCH_TIMEOUT ))
+  while (( $(date +%s) < deadline )); do
+    local st state status
+    st=$("$CLAUDE_BIN" agents --json 2>/dev/null | python3 -c 'import json,sys
+short=sys.argv[1]
+try: rows=json.load(sys.stdin)
+except Exception: sys.exit(0)
+for r in rows:
+    if str(r.get("id","")).startswith(short) or str(r.get("sessionId","")).startswith(short):
+        print("%s|%s" % (r.get("state",""), r.get("status",""))); break' "$short" 2>/dev/null)
+    state="${st%%|*}"; status="${st##*|}"
+    [[ "$state" == "running" || "$status" == "busy" ]] && saw_active=1
+    if [[ -z "$st" ]] || [[ "$state" == "done" ]] || { (( saw_active )) && [[ "$status" == "idle" ]]; }; then
+      local reply
+      reply=$(python3 -c 'import glob,json,os,sys
+short=sys.argv[1]; last=""
+for p in glob.glob(os.path.expanduser("~/.claude/projects/*/"+short+"*.jsonl")):
+    try: lines=open(p,encoding="utf-8",errors="replace").read().splitlines()
+    except Exception: continue
+    for ln in lines:
+        try: d=json.loads(ln)
+        except Exception: continue
+        if d.get("type")!="assistant": continue
+        for c in (d.get("message") or {}).get("content") or []:
+            if isinstance(c,dict) and c.get("type")=="text" and c.get("text","").strip():
+                last=c["text"].strip()
+print(last.splitlines()[0][:180] if last else "")' "$short" 2>/dev/null)
+      notify "${TAG}${key} done · ${label}" "${reply:-session finished}"
+      log "DONE key=$key id=$short reply=${reply:0:80}"
+      return 0
+    fi
+    sleep 3
+  done
+  log "WATCH-TIMEOUT key=$key id=$short"
+}
+
+# ---------------------------------------------------------------- last
+cmd_last() {
+  [[ -s "$LAST_URL_FILE" ]] || die "no session fired yet (no $LAST_URL_FILE)"
+  local url; url=$(cat "$LAST_URL_FILE")
+  open -a "Google Chrome" "$url" >/dev/null 2>&1 || open "$url"
+  echo "$url"
+}
+
+# ---------------------------------------------------------------- reap (D4)
+# Stops ONLY sessions this launcher created (name starts with TAG) that have been idle
+# longer than REAP_MAX_IDLE_HOURS. Pre-existing Remote Control bridges are never touched.
+cmd_reap() {
+  local dry=0; [[ "${1:-}" == "--dry-run" ]] && dry=1
+  local rows
+  rows=$("$CLAUDE_BIN" agents --json 2>/dev/null | python3 -c 'import json,sys,time
+tag=sys.argv[1]; hours=float(sys.argv[2])
+try: rows=json.load(sys.stdin)
+except Exception: rows=[]
+cutoff=hours*3600*1000; now=time.time()*1000
+for r in rows:
+    name=r.get("name") or ""
+    if not name.startswith(tag): continue
+    if (r.get("status") or r.get("state")) in ("busy","running"): continue
+    started=r.get("startedAt") or now
+    age=(now-started)/3600000.0
+    print("%s\t%.1f\t%s\t%s" % (r.get("id") or str(r.get("sessionId",""))[:8], age,
+          "STALE" if (now-started)>cutoff else "fresh", name))' "$TAG" "$REAP_MAX_IDLE_HOURS")
+  if [[ -z "$rows" ]]; then
+    echo "reap: no launcher sessions (${TAG}-tagged) found"; return 0
+  fi
+  printf 'id\tage_h\tverdict\tname\n'
+  printf '%s\n' "$rows"
+  (( dry )) && { echo "reap: --dry-run, nothing stopped"; return 0; }
+  local n=0 id verdict
+  while IFS=$'\t' read -r id _age verdict _name; do
+    [[ "$verdict" == "STALE" ]] || continue
+    "$CLAUDE_BIN" stop "$id" >/dev/null 2>&1 && { n=$((n+1)); log "REAP stopped $id"; }
+  done <<<"$rows"
+  echo "reap: stopped $n session(s) idle > ${REAP_MAX_IDLE_HOURS}h"
+}
+
+cmd_profiles() {
+  echo "profiles file: $PROFILES"
+  printf 'key\tdir\tflags\tlabel\n'
+  local k
+  for k in $(awk -F'\t' '$0 !~ /^#/ && NF {print $1}' "$PROFILES"); do
+    printf '%s\t%s\n' "$k" "$(lookup_profile "$k")"
+  done
+}
+
+# ---------------------------------------------------------------- dispatch
+case "${1:-}" in
+  ""|-h|--help) sed -n '1,32p' "$0"; exit 0 ;;
+  last)      shift; cmd_last "$@" ;;
+  reap)      shift; cmd_reap "$@" ;;
+  profiles)  shift; cmd_profiles "$@" ;;
+  __watch)   shift; cmd_watch "$@" ;;
+  k|l|c|q)   cmd_fire "$@" ;;
+  *)         die "unknown key or command '${1}' (expected k, l, c, q, last, reap, profiles)" ;;
+esac

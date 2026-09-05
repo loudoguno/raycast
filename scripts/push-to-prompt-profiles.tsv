@@ -1,0 +1,22 @@
+# push-to-prompt profile map — which Claude Code session each hotkey opens.
+#
+# CREATED 2026-09-04 by Sai-mx3 (Engineer agent) per WORK#14 decision D1.
+# CANONICAL COPY: ~/code/raycast/scripts/push-to-prompt-profiles.tsv
+# READ FROM:      ~/.config/push-to-prompt/profiles.tsv  (symlink to this file)
+# Edit here, not there. `push-to-prompt profiles` prints the resolved table.
+#
+# Columns are TAB separated: key <TAB> dir <TAB> flags <TAB> label
+#   key    single character; must match a Raycast command push-to-prompt-<key>.sh
+#   dir    session cwd. "~" is expanded. The literal AUTO means "resolve at fire time"
+#          (frontmost kitty cwd, else frontmost Finder folder, else ~/code).
+#   flags  extra claude flags, space separated. Leave empty for none.
+#          NEVER put --bare here: it bills ANTHROPIC_API_KEY instead of the subscription.
+#   label  short human name; shows in the notification and the session name.
+#
+# A blank flags column still needs its tab, or the label lands in the wrong field.
+#
+# key	dir	flags	label
+k	~/keybindings		keybindings
+l	~/.claude	--effort high	LifeOS
+c	AUTO		here
+q	~/.local/share/push-to-prompt/quick	--effort low	quick
