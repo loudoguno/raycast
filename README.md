@@ -22,6 +22,7 @@ Personal Raycast customization system: extensions, scripts, snippets, and assets
 │   ├── claude-usage/
 │   ├── contextual-cheatsheet/
 │   ├── finder-actions/
+│   ├── lous-links/
 │   ├── loutools/
 │   ├── omnifocus/
 │   ├── RoamResearch/
@@ -55,6 +56,7 @@ Personal Raycast customization system: extensions, scripts, snippets, and assets
 | **claude-usage** | 5 | TypeScript + AppleScript | Claude subscription usage monitoring + daily/weekly/monthly productivity summaries |
 | **contextual-cheatsheet** | — | TypeScript | Context-aware keyboard shortcut cheatsheets |
 | **finder-actions** | 1 | TypeScript | Action palette for frontmost Finder window (open in terminal, etc.) |
+| **lous-links** | 4 | TypeScript + AppleScript + bun CLI | Save the frontmost window as a link to the private lous-links library; search links and all Claude/Codex/Hermes sessions; ll CLI for shell + agents |
 | **loutools** | — | TypeScript | Personal utilities and tools collection |
 | **omnifocus** | 1 | TypeScript + JXA | Quick Add Anywhere — fuzzy search projects/tasks, create with tags, due, repeat, flag |
 | **RoamResearch** | 4 | TypeScript | Zero-friction search and preview for Roam Research knowledge graphs |
